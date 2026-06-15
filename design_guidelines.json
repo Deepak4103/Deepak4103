@@ -1,0 +1,82 @@
+{
+  "theme": "light_and_dark",
+  "archetype": "Swiss & High-Contrast",
+  "typography": {
+    "headings": {
+      "family": "Chivo",
+      "import_url": "https://fonts.googleapis.com/css2?family=Chivo:wght@400;700;900&display=swap",
+      "h1": "text-4xl tracking-tighter font-black",
+      "h2": "text-2xl tracking-tight font-bold",
+      "h3": "text-lg font-semibold",
+      "h4": "text-base font-medium"
+    },
+    "body": {
+      "family": "IBM Plex Sans",
+      "import_url": "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap",
+      "base": "text-sm leading-relaxed"
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "import_url": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap",
+      "base": "text-sm tracking-tight"
+    }
+  },
+  "colors": {
+    "light": {
+      "background": "#FAFAFA",
+      "surface": "#FFFFFF",
+      "border": "#E5E5E5",
+      "text_primary": "#0A0A0A",
+      "text_secondary": "#525252",
+      "graph_grid": "#E5E7EB"
+    },
+    "dark": {
+      "background": "#09090B",
+      "surface": "#18181B",
+      "border": "#27272A",
+      "text_primary": "#FAFAFA",
+      "text_secondary": "#A1A1AA",
+      "graph_grid": "#27272A"
+    },
+    "graph_traces": [
+      "#2563EB", 
+      "#E11D48", 
+      "#059669", 
+      "#D97706", 
+      "#9333EA", 
+      "#0891B2"
+    ]
+  },
+  "layout": {
+    "structure": "bento_control_room",
+    "sidebar": "w-full md:w-[380px] border-r border-border bg-surface h-screen overflow-y-auto p-6 flex flex-col gap-8",
+    "main_canvas": "flex-1 h-[50vh] md:h-screen bg-background relative overflow-hidden",
+    "spacing": "Dense for controls (gap-4), generous for structural sections (gap-8). Padding inside containers must be generous to avoid content collision."
+  },
+  "components": {
+    "cards": "Flat background, 1px solid border (border-border), no drop shadows by default. 4px border-radius.",
+    "buttons": "Sharp corners (rounded-sm or rounded-md). Solid contrast colors. Hover: bg-opacity-90. Use data-testid on all buttons.",
+    "inputs": "Use JetBrains Mono for the math input fields. No background fill, strict 1px border. Focus state must use ring-2 ring-primary offset.",
+    "sliders": "Custom shadcn slider. The slider thumb and track should ideally match the color of the mathematical trace it controls for visual mapping.",
+    "plotly_chart": "Must use 'paper_bg': 'rgba(0,0,0,0)' and 'plot_bg': 'rgba(0,0,0,0)' to inherit Tailwind backgrounds. Disable default Plotly logo in config."
+  },
+  "motion": {
+    "hover": "Transition transform 0.2s ease, opacity 0.2s ease",
+    "sliders": "Real-time UI updates on drag. Real-time plot updates."
+  },
+  "accessibility": {
+    "contrast": "Ensure all text over surfaces meets 4.5:1 minimum. Graph traces must be highly distinct.",
+    "focus": "All inputs and buttons must have visible focus rings.",
+    "data_testid": "MANDATORY on every interactive element (e.g. data-testid='add-function-button', data-testid='function-input-0', data-testid='variable-slider-A')"
+  },
+  "instructions_to_main_agent": [
+    "Install dependencies: react-plotly.js plotly.js mathjs @radix-ui/react-icons",
+    "Structure: Implement a responsive Sidebar + Main Canvas layout. Sidebar contains math inputs, generated sliders, and settings. Main Canvas contains the full-width/height Plotly component.",
+    "Math Logic: Extract mathematical variables (e.g. A, B, C) excluding the chosen independent variable (like x or t) using mathjs.parse or regex.",
+    "Slider Generation: Dynamically render a slider for each unique variable detected in the active functions.",
+    "Typography: Apply Chivo for headings, IBM Plex Sans for UI, and JetBrains Mono for all math equations, inputs, and Plotly axis/tick labels.",
+    "Theme: Implement theme toggling (Light/Dark). Watch for Plotly's layout updates dynamically when the theme changes (e.g., updating gridline, tick, and axis title colors).",
+    "Export Feature: Use Plotly's Plotly.downloadImage or standard config modebar button for high-quality PNG export.",
+    "Testing Requirements: Ensure you append clear, role-based data-testid attributes to all buttons, form inputs, sliders, and interactive icons."
+  ]
+}
