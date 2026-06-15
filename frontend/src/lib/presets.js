@@ -1,0 +1,51 @@
+// Curated demo presets. Each preset is a list of expressions and an independent var.
+export const PRESETS = [
+  {
+    id: "sine-family",
+    name: "Sine family",
+    description: "Amplitude · frequency · phase",
+    indepVar: "x",
+    functions: ["A * sin(B * x + C)"],
+    defaults: { A: 1, B: 1, C: 0 },
+  },
+  {
+    id: "parabola",
+    name: "Quadratic",
+    description: "a·x² + b·x + c",
+    indepVar: "x",
+    functions: ["a * x^2 + b * x + c"],
+    defaults: { a: 1, b: 0, c: 0 },
+  },
+  {
+    id: "exp-decay",
+    name: "Damped oscillator",
+    description: "Exponential decay · cosine",
+    indepVar: "t",
+    functions: ["A * exp(-k * t) * cos(w * t)"],
+    defaults: { A: 2, k: 0.3, w: 3 },
+  },
+  {
+    id: "gaussian",
+    name: "Gaussian",
+    description: "Bell curve with width σ",
+    indepVar: "x",
+    functions: ["A * exp(-((x - mu)^2) / (2 * sigma^2))"],
+    defaults: { A: 1, mu: 0, sigma: 1 },
+  },
+  {
+    id: "trig-trio",
+    name: "Trig trio",
+    description: "Compare sin, cos, tan",
+    indepVar: "x",
+    functions: ["sin(x)", "cos(x)", "0.5 * tan(x)"],
+    defaults: {},
+  },
+  {
+    id: "logistic",
+    name: "Logistic",
+    description: "S-curve growth",
+    indepVar: "x",
+    functions: ["L / (1 + exp(-k * (x - x0)))"],
+    defaults: { L: 1, k: 1, x0: 0 },
+  },
+];
