@@ -6,6 +6,13 @@ import { sampleFunction } from "@/lib/mathUtils";
 const Plot = createPlotlyComponent(Plotly);
 
 const SAMPLES = 600;
+const PNG_EXPORT_OPTIONS = {
+  format: "png",
+  filename: "plotlab-graph",
+  width: 1600,
+  height: 1000,
+  scale: 2,
+};
 
 /**
  * Plot canvas exposing imperative methods via ref:
@@ -24,19 +31,17 @@ const PlotCanvas = forwardRef(function PlotCanvas(
 ) {
   const plotRef = useRef(null);
 
-  useImperativeHandle(ref, () => ({
-    downloadPNG: async (filename = "plotlab-graph") => {
-      const node = plotRef.current?.el;
-      if (!node) return;
-      await Plotly.downloadImage(node, {
-        format: "png",
-        filename,
-        width: 1600,
-        height: 1000,
-        scale: 2,
-      });
-    },
-  }));
+  useImperativeHandle(
+    ref,
+    () => ({
+      downloadPNG: async (filename = PNG_EXPORT_OPTIONS.filename) => {
+        const node = plotRef.current?.el;
+        if (!node) return;
+        await Plotly.downloadImage(node, { ...PNG_EXPORT_OPTIONS, filename });
+      },
+    }),
+    []
+  );
 
   const scope = useMemo(() => {
     const s = {};
@@ -153,13 +158,7 @@ const PlotCanvas = forwardRef(function PlotCanvas(
         "autoScale2d",
         "toggleSpikelines",
       ],
-      toImageButtonOptions: {
-        format: "png",
-        filename: "plotlab-graph",
-        width: 1600,
-        height: 1000,
-        scale: 2,
-      },
+      toImageButtonOptions: PNG_EXPORT_OPTIONS,
     }),
     []
   );

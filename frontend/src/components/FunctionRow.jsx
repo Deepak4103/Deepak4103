@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Eye, EyeOff, Trash2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,8 +19,6 @@ export default function FunctionRow({
   onToggleVisible,
   onRemove,
 }) {
-  const [focused, setFocused] = useState(false);
-
   return (
     <div
       data-testid={`function-row-${fn.id}`}
@@ -47,8 +44,6 @@ export default function FunctionRow({
             spellCheck={false}
             value={fn.expr}
             onChange={(e) => onChangeExpr(fn.id, e.target.value)}
-            onFocus={() => setFocused(true)}
-            onBlur={() => setFocused(false)}
             placeholder="e.g. A * sin(B * x + C)"
             className="font-mono text-sm flex-1 bg-transparent outline-none placeholder:text-muted-foreground/60 min-w-0"
             aria-label={`Function ${index} expression`}
@@ -73,7 +68,7 @@ export default function FunctionRow({
           </button>
         </div>
       </div>
-      {fn.error && (focused || true) && (
+      {fn.error && (
         <div
           data-testid={`function-error-${fn.id}`}
           className="flex items-start gap-1.5 px-3 pb-2 pt-0 text-[11px] text-destructive font-mono"
