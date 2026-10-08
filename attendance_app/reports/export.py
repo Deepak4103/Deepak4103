@@ -5,12 +5,31 @@ import io
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
+from pathlib import Path
+
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import LongTable, Paragraph, SimpleDocTemplate, Spacer, TableStyle
 from xml.sax.saxutils import escape
+
+
+FONT_DIR = Path(__file__).resolve().parent / "fonts"
+
+
+def _register_fonts():
+    """Use the bundled DejaVu Sans (accented Latin, Greek, Cyrillic and more) for PDFs.
+    Falls back to the built-in Helvetica if the font files are missing."""
+    try:
+        if "DejaVuSans" not in pdfmetrics.getRegisteredFontNames():
+            pdfmetrics.registerFont(TTFont("DejaVuSans", str(FONT_DIR / "DejaVuSans.ttf")))
+            pdfmetrics.registerFont(TTFont("DejaVuSans-Bold", str(FONT_DIR / "DejaVuSans-Bold.ttf")))
+        return "DejaVuSans", "DejaVuSans-Bold"
+    except Exception:
+        return "Helvetica", "Helvetica-Bold"
 
 
 def to_xlsx(report):
@@ -53,10 +72,13 @@ def to_pdf(report):
     doc = SimpleDocTemplate(out, pagesize=landscape(A4), leftMargin=10 * mm, rightMargin=10 * mm,
                             topMargin=10 * mm, bottomMargin=10 * mm, title=report.title)
     styles = getSampleStyleSheet()
+    regular, bold = _register_fonts()
+    for name in ("Title", "Normal", "BodyText", "Italic"):
+        styles[name].fontName = bold if name == "Title" else regular
     n_cols = max(len(report.columns), 1)
     size = 8 if n_cols <= 7 else 7 if n_cols <= 10 else 6
-    cell = ParagraphStyle("cell", parent=styles["BodyText"], fontSize=size, leading=size + 2)
-    head = ParagraphStyle("head", parent=cell, textColor=colors.white, fontName="Helvetica-Bold")
+    cell = ParagraphStyle("cell", parent=styles["BodyText"], fontName=regular, fontSize=size, leading=size + 2)
+    head = ParagraphStyle("head", parent=cell, textColor=colors.white, fontName=bold)
     story = [Paragraph(escape(report.title), styles["Title"]),
              Paragraph(escape(report.subtitle), styles["Normal"]),
              Paragraph(f"Generated {datetime.datetime.now():%d-%m-%Y %H:%M}", styles["Normal"]), Spacer(1, 4 * mm)]

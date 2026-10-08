@@ -220,7 +220,7 @@ Free web hosts usually do not keep local files, so use a PostgreSQL database the
 Settings you can change in `config/settings.py`: `PERIODS_PER_DAY` (7), `WORKING_DAYS` (6 = Mon–Sat), `PENDING_LOOKBACK_DAYS` (30), `TIME_ZONE` (Asia/Kolkata).
 
 ## 6. Reports (admin → Reports)
-Student-wise attendance · Class-wise and subject-wise summary · Daily report · Shortage list · Faculty log · Leave and adjustment register · Faculty workload. All can be filtered by class, subject, faculty and date range and downloaded as Excel or PDF. (PDF uses a standard Latin font; names in other scripts appear correctly in Excel and on screen but may not in PDF.)
+Student-wise attendance · Class-wise and subject-wise summary · Daily report · Shortage list · Faculty log · Leave and adjustment register · Faculty workload. All can be filtered by class, subject, faculty and date range and downloaded as Excel or PDF. PDFs embed the bundled DejaVu Sans font, so accented Latin names (é, ñ, ü…), Greek and Cyrillic print correctly. Scripts that need complex shaping (e.g. Devanagari, Telugu, Tamil) are shown correctly on screen and in Excel, but are not supported in PDF.
 
 ## 7. Troubleshooting
 - **"CSRF verification failed" when logging in online** → set `CSRF_TRUSTED_ORIGINS=https://your-site-address`.
