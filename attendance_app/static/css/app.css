@@ -69,3 +69,8 @@ ul.plain{list-style:none;margin:8px 0 0;padding:0}ul.plain li{padding:6px 0}
 .stickybar{position:sticky;bottom:0;display:flex;gap:12px;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:0 0 16px;box-shadow:0 -4px 12px rgba(0,0,0,.08)}
 .counts{display:flex;gap:14px}.cnt b{font-size:1.4rem}.cnt.ok{color:var(--ok)}.cnt.bad{color:var(--bad)}
 @media(max-width:420px){.stu label{grid-template-columns:78px 1fr auto;padding:8px 10px}}
+.choices{display:flex;flex-direction:column;gap:6px}.choices.inline{flex-direction:row;flex-wrap:wrap}
+.choice{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.choice input{width:22px;min-height:22px;margin:0}.choice label{margin:0;font-weight:500;flex:1;min-height:44px;display:flex;align-items:center}
+.adj.missing{border-left:6px solid var(--warn)}.adj select{margin-top:6px}.modes{margin:8px 0}
+.consent{padding:10px 0;border-top:1px solid var(--line);margin-top:8px}.notice{border-left:6px solid var(--brand)}

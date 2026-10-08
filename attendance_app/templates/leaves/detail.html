@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Leave{% endblock %}
+{% block content %}
+<h1>{{ req.leave_type.name }}{% if admin %} · {{ req.faculty.full_name }}{% endif %}</h1>
+<div class="card">
+ <div class="row"><span><b>{{ req.from_date|date:"D j M Y" }}{% if req.to_date != req.from_date %} → {{ req.to_date|date:"D j M Y" }}{% endif %}</b>
+  <div class="muted">{{ req.get_scope_display }}{% if req.scope == 'periods' %} (periods {{ req.periods }}){% endif %} · {{ req.total_days }} day{{ req.total_days|pluralize }}{% if req.reason %} · {{ req.reason }}{% endif %}</div></span>
+  <span class="badge {% if req.status == 'approved' %}{% elif req.status == 'rejected' or req.status == 'cancelled' %}off{% else %}warn{% endif %}">{{ req.get_status_display }}</span></div>
+ {% if req.entered_by_admin %}<p class="muted">Entered by the admin ({{ req.created_by.full_name }}).</p>{% endif %}
+ {% if req.decision_note %}<p>Note: {{ req.decision_note }}</p>{% endif %}
+ {% if warning %}<p class="alert">⚠ {{ warning }}</p>{% endif %}
+</div>
+
+{% if can_decide %}
+<form method="post" action="{% url 'leave_decide' req.pk %}" class="card">{% csrf_token %}
+ <b>All substitutes have accepted. Decision:</b>
+ <label for="note">Note (optional)</label><input id="note" name="note" maxlength="250">
+ <div class="actions"><button class="btn primary" name="decision" value="approve" type="submit">Approve</button>
+  <button class="btn danger" name="decision" value="reject" type="submit">Reject</button></div>
+</form>
+{% elif admin and req.status == 'awaiting_consent' %}
+<p class="muted">Waiting for substitutes to accept. You can make an adjustment yourself below; that needs no acceptance.</p>
+{% endif %}
+
+<h2>Periods and substitutes ({{ rows|length }})</h2>
+{% if not rows %}<div class="card muted">No periods of yours fall in this leave, so no adjustment is needed.</div>{% endif %}
+<form method="post" action="{% url 'leave_adjust' req.pk %}">{% csrf_token %}
+{% for r in rows %}{% with a=r.adj %}
+<div class="card adj {% if not a.complete %}missing{% endif %}">
+ <div class="row"><b>{{ a.date|date:"D j M" }} · P{{ a.period_no }}</b>
+  <span class="badge {% if a.status == 'accepted' %}{% elif a.status == 'declined' %}off{% else %}warn{% endif %}">
+   {% if r.taken %}Taken{% else %}{{ a.get_status_display }}{% endif %}</span></div>
+ <div>{{ a.original_subject.name }} · {{ a.school_class.name }}</div>
+ {% if r.editable %}
+  <label for="sub_{{ a.pk }}">Substitute</label>
+  <select id="sub_{{ a.pk }}" name="sub_{{ a.pk }}"><option value="">— choose —</option>
+   {% for f in r.eligible %}<option value="{{ f.pk }}" {% if a.substitute_id == f.pk %}selected{% endif %}>{{ f.full_name }}</option>{% endfor %}</select>
+  {% if not r.eligible %}<div class="muted">No one is eligible and free in this period.</div>{% endif %}
+  <div class="choices inline modes">
+   <div class="choice"><input type="radio" id="same_{{ a.pk }}" name="mode_{{ a.pk }}" value="same" {% if not a.subject_taught_id or a.same_subject %}checked{% endif %}><label for="same_{{ a.pk }}">Same subject</label></div>
+   <div class="choice"><input type="radio" id="diff_{{ a.pk }}" name="mode_{{ a.pk }}" value="diff" {% if a.subject_taught_id and not a.same_subject %}checked{% endif %}><label for="diff_{{ a.pk }}">Different subject</label></div>
+  </div>
+  <select name="subj_{{ a.pk }}" class="subjsel" data-adj="{{ a.pk }}" aria-label="Subject to teach">
+   <option value="">— subject of this class —</option>
+   {% for s in r.subjects %}<option value="{{ s.pk }}" {% if a.subject_taught_id == s.pk %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select>
+  {% if admin and a.substitute_id %}<button class="btn small danger" type="submit" form="clear{{ a.pk }}">Cancel adjustment</button>{% endif %}
+ {% else %}
+  <div>{% if a.substitute %}<b>{{ a.substitute.full_name }}</b> · {{ a.subject_taught.name }}{% if a.same_subject %} (same subject){% else %} (different subject){% endif %}
+   <div class="muted">Arranged by {% if a.made_by_role == 'admin' %}admin{% else %}faculty{% endif %}</div>
+   {% else %}<span class="muted">No substitute chosen.</span>{% endif %}</div>
+ {% endif %}
+</div>
+{% endwith %}{% endfor %}
+{% if any_editable %}
+<div class="stickybar"><span class="muted">{% if all_complete %}All periods filled in ✔{% else %}Every period needs a substitute and subject.{% endif %}</span>
+ <span class="actions" style="margin:0">
+ <button class="btn {% if not can_submit %}primary{% endif %}" name="action" value="save" type="submit">Save</button>
+ {% if can_submit %}<button class="btn primary" name="action" value="submit" type="submit" {% if not all_complete %}title="Save first; submit needs every period filled"{% endif %}>Submit request</button>{% endif %}</span></div>
+{% endif %}
+</form>
+{% for r in rows %}{% if admin and r.editable and r.adj.substitute_id %}<form id="clear{{ r.adj.pk }}" method="post" action="{% url 'adjustment_clear' r.adj.pk %}">{% csrf_token %}</form>{% endif %}{% endfor %}
+
+{% if returns %}
+<h2>Return adjustments</h2>
+{% for a in returns %}<div class="card"><b>{{ req.faculty.full_name }}</b> takes {{ a.original_faculty.full_name }}'s {{ a.school_class.name }} P{{ a.period_no }} on {{ a.date|date:"D j M" }}
+ · {{ a.subject_taught.name }}{% if not a.same_subject %} <span class="muted">(timetable: {{ a.original_subject.name }})</span>{% endif %}
+ <span class="badge {% if a.status == 'accepted' %}{% else %}warn{% endif %}">{{ a.get_status_display }}</span>
+ {% if admin %}<form method="post" action="{% url 'adjustment_clear' a.pk %}" class="actions">{% csrf_token %}<button class="btn small danger" type="submit">Cancel</button></form>{% endif %}</div>{% endfor %}
+{% endif %}
+
+<div class="actions">
+ {% if can_offer_return %}<a class="btn" href="{% url 'return_offer' req.pk %}">Offer a return (take a substitute's period later)</a>{% endif %}
+ {% if can_cancel %}<form method="post" action="{% url 'leave_cancel' req.pk %}" onsubmit="return confirm('Cancel this leave?')">{% csrf_token %}<button class="btn danger" type="submit">Cancel leave</button></form>{% endif %}
+ <a class="btn" href="{% if admin %}{% url 'leave_list' %}{% else %}{% url 'my_leaves' %}{% endif %}">Back</a>
+</div>
+<script>
+document.querySelectorAll('.subjsel').forEach(function(sel){
+  var id=sel.dataset.adj, same=document.getElementById('same_'+id), diff=document.getElementById('diff_'+id);
+  function upd(){sel.style.display=diff.checked?'block':'none'; if(!diff.checked){sel.value='';}}
+  same.addEventListener('change',upd); diff.addEventListener('change',upd); upd();
+});
+</script>
+{% endblock %}

@@ -58,3 +58,20 @@ class HolidayForm(forms.ModelForm):
         model = Holiday
         fields = ["from_date", "to_date", "reason", "school_class"]
         widgets = {"from_date": DateInput(), "to_date": DateInput()}
+
+
+class PeriodSettingsForm(forms.Form):
+    forenoon_last_period = forms.IntegerField(
+        min_value=1, label="Last forenoon period",
+        help_text="Periods up to this number are forenoon; the rest are afternoon (used for half-day leave).")
+
+    def __init__(self, *args, max_period, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["forenoon_last_period"].max_value = max_period - 1
+        self.max_period = max_period
+
+    def clean_forenoon_last_period(self):
+        v = self.cleaned_data["forenoon_last_period"]
+        if not 1 <= v < self.max_period:
+            raise forms.ValidationError(f"Enter a number from 1 to {self.max_period - 1}.")
+        return v

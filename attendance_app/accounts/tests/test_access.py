@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from accounts.models import User
@@ -10,9 +10,13 @@ class AccessTests(TestCase):
         cls.admin = User.objects.create_user("adm", password="pw123456", full_name="Admin", role=User.ADMIN)
         cls.fac = User.objects.create_user("fac", password="pw123456", full_name="Fac", role=User.FACULTY)
 
-    def test_passwords_are_hashed(self):
-        self.assertNotEqual(self.fac.password, "pw123456")
-        self.assertTrue(self.fac.password.startswith("pbkdf2_"))
+    @override_settings(PASSWORD_HASHERS=["django.contrib.auth.hashers.PBKDF2PasswordHasher"])
+    def test_passwords_are_hashed_with_pbkdf2(self):
+        # (the rest of the test-suite uses a fast hasher; production uses Django's default PBKDF2)
+        user = User.objects.create_user("hashcheck", password="pw123456", full_name="H", role=User.FACULTY)
+        self.assertNotEqual(user.password, "pw123456")
+        self.assertTrue(user.password.startswith("pbkdf2_sha256$"))
+        self.assertTrue(user.check_password("pw123456"))
 
     def test_anonymous_redirected_to_login(self):
         for name in ["admin_home", "class_list", "faculty_list", "holiday_list", "faculty_home"]:

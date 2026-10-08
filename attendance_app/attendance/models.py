@@ -13,6 +13,9 @@ class AttendanceSession(models.Model):
     # What the timetable said, kept so later timetable edits never change history.
     scheduled_subject = models.ForeignKey("academics.Subject", on_delete=models.PROTECT, related_name="+")
     scheduled_faculty = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+")
+    # Set when this period was taken by a substitute (leave or return adjustment).
+    adjustment = models.ForeignKey("leaves.Adjustment", null=True, blank=True, on_delete=models.PROTECT,
+                                   related_name="sessions")
     topic = models.CharField(max_length=250)
     remarks = models.TextField(blank=True)
     unlocked = models.BooleanField(default=False, help_text="Admin has re-opened this record for the faculty")

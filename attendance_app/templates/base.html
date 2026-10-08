@@ -13,12 +13,14 @@
    <a href="{% url 'admin_home' %}">Dashboard</a>
    <a href="{% url 'monitor' %}">Monitoring</a>
    <a href="{% url 'records' %}">Attendance</a>
+   <a href="{% url 'leave_list' %}">Leave</a>
    <a href="{% url 'class_list' %}">Classes</a>
    <a href="{% url 'faculty_list' %}">Faculty</a>
    <a href="{% url 'holiday_list' %}">Holidays</a>
   {% else %}
    <a href="{% url 'faculty_home' %}">Home</a>
    <a href="{% url 'records' %}">My records</a>
+   <a href="{% url 'my_leaves' %}">Leave</a>
   {% endif %}
   <a href="{% url 'password_change' %}">Password</a>
   <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out ({{ user.username }})</button></form>

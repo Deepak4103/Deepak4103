@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Apply for leave{% endblock %}
+{% block content %}
+<h1>{% if admin %}Enter leave for a faculty member{% else %}Apply for leave{% endif %}</h1>
+{% if admin %}<p class="muted">Entered by the admin, the leave is approved straight away and you can fix substitutes without their acceptance. Past dates are allowed.</p>
+{% else %}<p class="muted">Workload adjustment is compulsory: next you will choose a substitute and subject for every period that falls in your leave. Sundays and holidays are skipped.</p>{% endif %}
+<form method="post" class="card">{% csrf_token %}
+ {{ form.non_field_errors }}
+ {% if admin %}<label for="{{ form.faculty.id_for_label }}">Faculty</label>{{ form.faculty }}{{ form.faculty.errors }}{% endif %}
+ <label for="{{ form.leave_type.id_for_label }}">Leave type</label>{{ form.leave_type }}{{ form.leave_type.errors }}
+ <label for="{{ form.from_date.id_for_label }}">From date</label>{{ form.from_date }}{{ form.from_date.errors }}
+ <label for="{{ form.to_date.id_for_label }}">To date</label>{{ form.to_date }}{{ form.to_date.errors }}
+ <label>For</label>
+ <div class="choices">{% for r in form.scope %}<div class="choice">{{ r.tag }}<label for="{{ r.id_for_label }}">{{ r.choice_label }}</label></div>{% endfor %}</div>{{ form.scope.errors }}
+ <div id="periodbox"><label>Which periods</label>
+  <div class="choices inline">{% for c in form.periods %}<div class="choice">{{ c.tag }}<label for="{{ c.id_for_label }}">{{ c.choice_label }}</label></div>{% endfor %}</div>{{ form.periods.errors }}</div>
+ <label for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>{{ form.reason }}
+ <div class="actions"><button class="btn primary" type="submit">Continue</button>
+  <a class="btn" href="{% if admin %}{% url 'leave_list' %}{% else %}{% url 'my_leaves' %}{% endif %}">Cancel</a></div>
+</form>
+<script>
+(function(){
+  var radios=document.querySelectorAll('input[name=scope]'), box=document.getElementById('periodbox');
+  function upd(){var v=document.querySelector('input[name=scope]:checked'); box.style.display=(v&&v.value==='periods')?'block':'none';}
+  radios.forEach(function(r){r.addEventListener('change',upd)}); upd();
+  var from=document.getElementById('{{ form.from_date.id_for_label }}'), to=document.getElementById('{{ form.to_date.id_for_label }}');
+  {% if not admin %}from.min=to.min='{{ today|date:"Y-m-d" }}';{% endif %}
+  from.addEventListener('change',function(){ if(!to.value||to.value<from.value){to.value=from.value;} });
+})();
+</script>
+{% endblock %}

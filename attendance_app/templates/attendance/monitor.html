@@ -14,8 +14,8 @@
 {% for c, slots in groups %}
 <div class="card"><h2>{{ c.full_name }}</h2>
  <div class="tablewrap"><table><tr><th>P</th><th>Time</th><th>Subject</th><th>Faculty</th><th>Status</th><th></th></tr>
- {% for s in slots %}<tr><td>{{ s.period_no }}</td><td>{{ s.entry.start_time|time:"H:i" }}</td><td>{{ s.subject.name }}</td><td>{{ s.faculty.full_name }}</td>
-  <td>{% if s.completed %}<span class="badge">Entered</span>{% else %}<span class="badge warn">Pending</span>{% endif %}</td>
+ {% for s in slots %}<tr><td>{{ s.period_no }}</td><td>{{ s.entry.start_time|time:"H:i" }}</td><td>{{ s.subject.name }}{% if s.is_adjusted and s.subject.pk != s.entry.subject_id %}<div class="muted">timetable: {{ s.entry.subject.name }}</div>{% endif %}</td><td>{{ s.faculty.full_name }}{% if s.is_adjusted %}<div><span class="badge warn">Adjusted for {{ s.adjusted_for.full_name }}</span></div>{% endif %}</td>
+  <td>{% if s.completed %}<span class="badge">Entered</span>{% elif s.unadjusted %}<span class="badge off">On leave - no substitute</span>{% else %}<span class="badge warn">Pending</span>{% endif %}</td>
   <td>{% if s.completed %}<a href="{% url 'session_detail' s.session.pk %}">View</a>{% elif not is_future %}<a href="{% url 'mark_attendance' c.pk s.date s.period_no %}">Enter</a>{% endif %}</td></tr>
  {% empty %}<tr><td colspan="6" class="muted">No timetable for this day.</td></tr>{% endfor %}</table></div>
 </div>

@@ -3,6 +3,33 @@
 {% block content %}
 <h1>Hello, {{ user.full_name }}</h1>
 
+{% if notices %}
+<div class="card notice"><div class="row"><b>🔔 Notifications</b>
+ <form method="post" action="{% url 'notifications_clear' %}">{% csrf_token %}<button class="btn small" type="submit">Dismiss all</button></form></div>
+ <ul class="plain">{% for n in notices %}<li>{{ n.text }}{% if n.url %} <a href="{{ n.url }}">Open</a>{% endif %}</li>{% endfor %}</ul></div>
+{% endif %}
+
+{% if consents %}
+<div class="alert"><b>🙋 {{ consents|length }} request{{ consents|length|pluralize }} waiting for your answer</b>
+ {% for a in consents %}
+ <div class="consent">
+  {% if a.kind == 'return' %}<b>{{ a.substitute.full_name }}</b> offers to take your period
+  {% else %}<b>{{ a.original_faculty.full_name }}</b> asks you to take
+  {% endif %}
+  <b>{{ a.school_class.name }} · P{{ a.period_no }} · {{ a.date|date:"D j M" }}</b>.
+  Subject: <b>{{ a.subject_taught.name }}</b>{% if not a.same_subject %} <span class="muted">(timetable: {{ a.original_subject.name }})</span>{% endif %}
+  <form method="post" action="{% url 'adjustment_respond' a.pk %}" class="actions">{% csrf_token %}
+   <button class="btn primary" name="answer" value="accept" type="submit">Accept</button>
+   <button class="btn danger" name="answer" value="decline" type="submit">Decline</button></form>
+ </div>{% endfor %}</div>
+{% endif %}
+
+{% if declined %}
+<div class="alert"><b>↩ Someone declined - please choose another substitute</b>
+ <ul class="plain">{% for a in declined %}<li>{{ a.substitute.full_name }} declined {{ a.school_class.name }} P{{ a.period_no }} on {{ a.date|date:"D j M" }}
+  · <a href="{% url 'leave_detail' a.leave_request_id %}">Fix</a></li>{% endfor %}</ul></div>
+{% endif %}
+
 {% if pending %}
 <div class="alert">
  <b>⚠ {{ pending|length }} period{{ pending|length|pluralize }} waiting for attendance</b>
@@ -11,7 +38,7 @@
  {% for s in pending %}
   <li><a class="btn small primary" href="{% url 'mark_attendance' s.school_class.pk s.date s.period_no %}">Mark</a>
    {% if s.date == today %}<b>Today</b>{% else %}<b>{{ s.date|date:"D j M" }}</b>{% endif %}
-   · P{{ s.period_no }} · {{ s.subject.name }} · {{ s.school_class.name }}</li>
+   · P{{ s.period_no }} · {{ s.subject.name }} · {{ s.school_class.name }}{% if s.is_adjusted %} <span class="badge warn">Adjustment for {{ s.adjusted_for.full_name }}</span>{% endif %}</li>
  {% endfor %}
  </ul>
 </div>
@@ -22,10 +49,19 @@
  <a class="card slotcard {{ s.status }}" href="{% url 'mark_attendance' s.school_class.pk s.date s.period_no %}">
   <div class="row"><b>Period {{ s.period_no }} · {{ s.entry.start_time|time:"H:i" }}–{{ s.entry.end_time|time:"H:i" }}</b>
    {% if s.completed %}<span class="badge">Completed</span>{% else %}<span class="badge warn">Pending</span>{% endif %}</div>
-  <div>{{ s.subject.name }} <span class="muted">({{ s.subject.code }})</span></div>
+  {% if s.is_adjusted %}<div><span class="badge warn">Adjustment for {{ s.adjusted_for.full_name }}</span></div>{% endif %}
+  <div>{{ s.subject.name }} <span class="muted">({{ s.subject.code }})</span>{% if s.is_adjusted and s.subject.pk != s.entry.subject_id %} <span class="muted">· timetable: {{ s.entry.subject.name }}</span>{% endif %}</div>
   <div class="muted">{{ s.school_class.full_name }}</div>
  </a>
 {% empty %}
  <div class="card muted">No periods for you today{% if today.weekday == 6 %} (Sunday){% endif %}.</div>
 {% endfor %}
+
+<h2>My leave</h2>
+<div class="card">
+ {% for b in balance %}<div class="row"><span>{{ b.type.name }}</span>
+  <span>{% if b.exhausted %}<span class="badge off">Balance exhausted</span>{% else %}<b>{{ b.remaining }}</b> of {{ b.allowed }} days left{% endif %}</span></div>{% endfor %}
+ <div class="actions"><a class="btn primary" href="{% url 'leave_apply' %}">Apply for leave</a>
+ <a class="btn" href="{% url 'my_leaves' %}">My leave requests</a></div>
+</div>
 {% endblock %}

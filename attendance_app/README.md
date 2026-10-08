@@ -1,6 +1,6 @@
 # College Attendance (Django)
 
-Work in progress. Phases 1 (admin setup, logins) and 2 (timetable, attendance marking) are complete.
+Work in progress. Phases 1 (admin setup, logins), 2 (timetable, attendance marking) and 3 (leave and workload adjustment) are complete. Phase 4 (reports and exports) is next.
 
 ## Quick start (local)
 ```bash

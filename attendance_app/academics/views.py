@@ -9,8 +9,10 @@ from accounts.decorators import admin_required
 from accounts.models import User
 
 from . import importing
-from .forms import ClassForm, HolidayForm, StudentForm, StudentUploadForm, SubjectForm
-from .models import Allotment, Holiday, SchoolClass, Student, Subject
+from django.conf import settings as dj_settings
+
+from .forms import PeriodSettingsForm, ClassForm, HolidayForm, StudentForm, StudentUploadForm, SubjectForm
+from .models import Allotment, Holiday, SchoolClass, Student, Subject, forenoon_last_period, set_setting
 
 STUDENT_HEADERS = ["roll_no", "name"]
 STUDENT_EXAMPLE = [["21CSE001", "Asha Rao"], ["21CSE002", "Ravi Kumar"]]
@@ -48,7 +50,13 @@ def admin_home(request):
     index = att.ScheduleIndex(today, today)
     slots = index.slots(today)
     summary = {"done": sum(1 for s in slots if s.completed), "pending": sum(1 for s in slots if not s.completed)}
-    return render(request, "academics/admin_home.html", {"stats": stats, "summary": summary, "today": today})
+    from leaves import services as leave_svc
+    from leaves.models import LeaveRequest
+    return render(request, "academics/admin_home.html", {
+        "stats": stats, "summary": summary, "today": today,
+        "waiting": LeaveRequest.objects.filter(status=LeaveRequest.AWAITING_ADMIN).count(),
+        "unadjusted": leave_svc.unadjusted_periods(today),
+        "notices": request.user.notifications.filter(read=False)[:10]})
 
 
 def home(request):
@@ -282,3 +290,18 @@ def holiday_edit(request, pk):
 @admin_required
 def holiday_delete(request, pk):
     return _delete_page(request, get_object_or_404(Holiday, pk=pk), "holiday_list")
+
+
+# ---------- settings ----------
+
+@admin_required
+def period_settings(request):
+    form = PeriodSettingsForm(request.POST or None, max_period=dj_settings.PERIODS_PER_DAY,
+                              initial={"forenoon_last_period": forenoon_last_period()})
+    if request.method == "POST" and form.is_valid():
+        set_setting("forenoon_last_period", form.cleaned_data["forenoon_last_period"])
+        messages.success(request, "Saved.")
+        return redirect("period_settings")
+    n = dj_settings.PERIODS_PER_DAY
+    return render(request, "form.html", {"title": f"Forenoon / afternoon periods ({n} periods a day)", "form": form,
+                                         "cancel": "admin_home"})

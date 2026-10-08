@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     "accounts",
     "academics",
     "timetable",
+    "leaves",
     "attendance",
 ]
 
@@ -99,3 +100,8 @@ if not DEBUG:
 
 # How many days back the "pending periods" prompt looks for attendance not yet entered.
 PENDING_LOOKBACK_DAYS = 30
+
+# Faster password hashing while running the automated tests only (real logins always use PBKDF2).
+import sys  # noqa: E402
+if "test" in sys.argv:
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

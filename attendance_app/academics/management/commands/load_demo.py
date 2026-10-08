@@ -1,3 +1,5 @@
+import datetime
+
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
@@ -50,6 +52,7 @@ class Command(BaseCommand):
         Holiday.objects.get_or_create(from_date=holiday, to_date=holiday, defaults={"reason": "Festival holiday"})
         self._timetables(fac)
         self._attendance()
+        self._leave(fac)
         self.stdout.write(self.style.SUCCESS(
             f"Demo data loaded. Faculty logins: ravi / sneha / anil, password {DEMO_PASSWORD}"))
 
@@ -111,3 +114,35 @@ class Command(BaseCommand):
                 svc.save_attendance(school_class=slot.school_class, date=today, period_no=slot.period_no,
                                     entry=slot.entry, user=slot.entry.faculty, absent_ids=set(),
                                     topic=f"{slot.entry.subject.name}: Introduction")
+
+    def _leave(self, fac):
+        """Leave types, and one approved leave (Ravi, two periods) with a substitute for each period."""
+        from attendance import services as svc
+        from leaves import services as leave_svc
+        from leaves.models import LeaveRequest, LeaveType
+        for name, days in (("Casual Leave", 12), ("Medical Leave", 10), ("Earned Leave", 15), ("On Duty", 10)):
+            LeaveType.objects.get_or_create(name=name, defaults={"days_per_year": days})
+        if LeaveRequest.objects.exists():
+            return
+        admin = User.objects.get(role=User.ADMIN)
+        today = svc.today()
+        day = today
+        index = svc.ScheduleIndex(today, today + datetime.timedelta(days=10))
+        while not [s for s in index.slots(day, faculty_id=fac["ravi"].pk) if not s.completed]:
+            day += datetime.timedelta(days=1)
+        mine = [s for s in index.slots(day, faculty_id=fac["ravi"].pk) if not s.completed]
+        periods = sorted({s.period_no for s in mine})[-2:]
+        req = leave_svc.create_leave_request(
+            faculty=fac["ravi"], leave_type=LeaveType.objects.get(name="Casual Leave"), from_date=day, to_date=day,
+            scope="periods", periods=",".join(map(str, periods)), reason="Family function", created_by=admin)
+        ctx = leave_svc.DayContext(day)
+        for n, adj in enumerate(leave_svc.leave_adjustments(req)):
+            options = leave_svc.eligible_faculty(adj.school_class, adj.original_subject, day, adj.period_no,
+                                                 original_faculty=fac["ravi"], ctx=ctx)
+            if not options:
+                continue
+            sub = options[0]
+            others = [s for s in adj.school_class.subjects.all() if s.pk != adj.original_subject_id]
+            different = n % 2 == 0 and others                  # first one teaches a different subject
+            leave_svc.set_adjustment(adj, user=admin, substitute=sub, same_subject=not different,
+                                     subject=others[0] if different else None)

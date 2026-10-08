@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Leave types{% endblock %}
+{% block content %}
+<div class="row"><h1>Leave types</h1><a class="btn primary" href="{% url 'leave_type_add' %}">+ Add type</a></div>
+<p class="muted">Workload adjustment is compulsory for every leave type.</p>
+<div class="card tablewrap"><table><tr><th>Name</th><th>Days / year</th><th>Status</th><th></th></tr>
+{% for t in types %}<tr><td>{{ t.name }}</td><td>{{ t.days_per_year }}</td><td>{% if t.active %}<span class="badge">Active</span>{% else %}<span class="badge off">Inactive</span>{% endif %}</td>
+ <td><a href="{% url 'leave_type_edit' t.pk %}">Edit</a> · <a href="{% url 'leave_type_delete' t.pk %}">Delete</a></td></tr>
+{% empty %}<tr><td colspan="4" class="muted">No leave types yet.</td></tr>{% endfor %}</table></div>
+<div class="actions"><a class="btn" href="{% url 'leave_list' %}">Back to leave</a></div>
+{% endblock %}

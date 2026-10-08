@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Leave balances{% endblock %}
+{% block content %}
+<h1>Leave balances {{ year }}</h1>
+<form method="get" class="card filters"><div><label>Year</label><input type="number" name="year" value="{{ year }}"></div>
+ <div class="actions"><button class="btn primary" type="submit">Show</button></div></form>
+<div class="card tablewrap"><table><tr><th>Faculty</th>{% for t in types %}<th>{{ t.name }}<br><span class="muted">used / allowed</span></th>{% endfor %}</tr>
+{% for f, bal in rows %}<tr><td>{{ f.full_name }}</td>{% for b in bal %}<td>{{ b.used }} / {{ b.allowed }}{% if b.exhausted %} <span class="badge off">Exhausted</span>{% endif %}</td>{% endfor %}</tr>{% endfor %}</table></div>
+<p class="muted">Only approved leave is counted. Half days and specific periods count as 0.5 day.</p>
+<div class="actions"><a class="btn" href="{% url 'leave_list' %}">Back to leave</a></div>
+{% endblock %}

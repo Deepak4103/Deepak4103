@@ -8,7 +8,9 @@ from django.db import IntegrityError, transaction
 from django.db.models import Prefetch
 from django.utils import timezone
 
-from academics.models import Holiday, SchoolClass, is_holiday
+from academics.models import Holiday, SchoolClass, forenoon_last_period, is_holiday
+from leaves.models import Adjustment, LeaveDay, LeaveRequest
+from leaves.periods import covered_periods
 from timetable.models import Timetable, TimetableEntry
 from timetable.services import timetable_in_force
 
@@ -31,32 +33,56 @@ class DuplicateAttendance(AttendanceError):
 
 @dataclass
 class Slot:
-    """One scheduled period of one class on one date, with its attendance (if entered)."""
+    """One scheduled period of one class on one date, with its attendance (if entered).
+
+    `adjustment` is the substitution in force for this period (leave or return), if any.
+    `on_leave` is True when the timetable faculty is on approved leave and nobody has been fixed yet."""
     school_class: SchoolClass
     date: datetime.date
     period_no: int
     entry: TimetableEntry
     session: AttendanceSession | None
+    adjustment: Adjustment | None = None
+    on_leave: bool = False
 
     @property
     def completed(self):
         return self.session is not None
 
     @property
+    def unadjusted(self):
+        return self.on_leave and self.adjustment is None and self.session is None
+
+    @property
     def status(self):
-        return "completed" if self.completed else "pending"
+        return "completed" if self.completed else ("unadjusted" if self.unadjusted else "pending")
 
     @property
     def subject(self):
-        return self.session.subject if self.session else self.entry.subject
+        if self.session:
+            return self.session.subject
+        return self.adjustment.subject_taught if self.adjustment else self.entry.subject
 
     @property
     def faculty(self):
-        return self.session.taken_by if self.session else self.entry.faculty
+        if self.session:
+            return self.session.taken_by
+        return self.adjustment.substitute if self.adjustment else self.entry.faculty
+
+    @property
+    def adjusted_for(self):
+        """The faculty member whose period this is, when someone else is taking it."""
+        adj = self.session.adjustment if self.session and self.session.adjustment_id else self.adjustment
+        return adj.original_faculty if adj else None
+
+    @property
+    def is_adjusted(self):
+        return self.adjusted_for is not None
 
 
 class ScheduleIndex:
-    """Loads timetables, holidays and attendance for a date range once, then answers questions in memory."""
+    """Loads timetables, holidays, leave, adjustments and attendance for a date range once,
+    then answers questions in memory."""
 
     def __init__(self, start, end):
         self.classes = list(SchoolClass.objects.all())
@@ -68,8 +94,22 @@ class ScheduleIndex:
                 by_day.setdefault(e.day, []).append(e)
             self.versions.setdefault(tt.school_class_id, []).append((tt.effective_from, by_day))
         self.holidays = list(Holiday.objects.filter(to_date__gte=start, from_date__lte=end))
-        sessions = AttendanceSession.objects.filter(date__range=(start, end)).select_related("subject", "taken_by")
+        sessions = (AttendanceSession.objects.filter(date__range=(start, end))
+                    .select_related("subject", "taken_by", "adjustment__original_faculty"))
         self.sessions = {(s.school_class_id, s.date, s.period_no): s for s in sessions}
+        # substitutions in force: accepted, and the leave itself approved
+        adjs = (Adjustment.objects.filter(date__range=(start, end), status=Adjustment.ACCEPTED,
+                                          leave_request__status=LeaveRequest.APPROVED)
+                .select_related("substitute", "original_faculty", "subject_taught"))
+        self.adjustments = {(a.school_class_id, a.date, a.period_no): a for a in adjs}
+        # who is on approved leave, and for which periods
+        fl = forenoon_last_period()
+        self.leave_cover = {}
+        days = LeaveDay.objects.filter(date__range=(start, end), request__status=LeaveRequest.APPROVED
+                                       ).select_related("request")
+        for d in days:
+            cover = covered_periods(d.request.scope, d.request.periods, fl)
+            self.leave_cover.setdefault((d.request.faculty_id, d.date), set()).update(cover)
 
     def holiday_reason(self, date, class_id):
         if date.weekday() == 6:
@@ -88,17 +128,27 @@ class ScheduleIndex:
                 break
         return found
 
+    def entries_for(self, date, class_id):
+        """Raw timetable entries for a class on a date (ignores holidays, leave and attendance)."""
+        return (self._version(class_id, date) or {}).get(date.weekday(), [])
+
     def slots(self, date, class_id=None, faculty_id=None):
+        """Periods of the day. With `faculty_id`, only periods that faculty is responsible for: their own,
+        unless the period was given to a substitute, plus periods they are substituting."""
         out = []
         for c in self.classes:
             if class_id and c.pk != class_id:
                 continue
             if self.holiday_reason(date, c.pk):
                 continue
-            for e in (self._version(c.pk, date) or {}).get(date.weekday(), []):
-                if faculty_id and e.faculty_id != faculty_id:
+            for e in self.entries_for(date, c.pk):
+                key = (c.pk, date, e.period_no)
+                adj = self.adjustments.get(key)
+                on_leave = e.period_no in self.leave_cover.get((e.faculty_id, date), ())
+                slot = Slot(c, date, e.period_no, e, self.sessions.get(key), adj, on_leave)
+                if faculty_id and (slot.faculty.pk != faculty_id or slot.unadjusted):
                     continue
-                out.append(Slot(c, date, e.period_no, e, self.sessions.get((c.pk, date, e.period_no))))
+                out.append(slot)
         out.sort(key=lambda s: (s.period_no, s.school_class.name))
         return out
 
@@ -124,6 +174,33 @@ def find_entry(school_class, date, period_no):
         return None
     return (tt.entries.select_related("subject", "faculty")
             .filter(day=date.weekday(), period_no=period_no).first())
+
+
+def find_adjustment(school_class, date, period_no):
+    """The substitution in force for this period, or None."""
+    return (Adjustment.objects.filter(school_class=school_class, date=date, period_no=period_no,
+                                      status=Adjustment.ACCEPTED, leave_request__status=LeaveRequest.APPROVED)
+            .select_related("substitute", "original_faculty", "subject_taught").first())
+
+
+def is_on_leave(faculty_id, date, period_no):
+    """True if the faculty has approved leave covering this period."""
+    fl = forenoon_last_period()
+    for d in LeaveDay.objects.filter(date=date, request__faculty_id=faculty_id,
+                                     request__status=LeaveRequest.APPROVED).select_related("request"):
+        if period_no in covered_periods(d.request.scope, d.request.periods, fl):
+            return True
+    return False
+
+
+def responsible_faculty_id(entry, adjustment, date):
+    """Who is meant to take this period: the substitute if there is one, else the timetable faculty
+    (None while that faculty is on leave and nobody has been fixed)."""
+    if adjustment:
+        return adjustment.substitute_id
+    if is_on_leave(entry.faculty_id, date, entry.period_no):
+        return None
+    return entry.faculty_id
 
 
 # ---------------------------------------------------------------- permissions
@@ -163,7 +240,7 @@ def _clean_topic(topic):
     return topic
 
 
-def save_attendance(*, school_class, date, period_no, entry, user, absent_ids, topic, remarks=""):
+def save_attendance(*, school_class, date, period_no, entry, user, absent_ids, topic, remarks="", adjustment=None):
     """Create the attendance for a period. Everyone is present except `absent_ids`."""
     topic = _clean_topic(topic)
     if date > today():
@@ -174,13 +251,18 @@ def save_attendance(*, school_class, date, period_no, entry, user, absent_ids, t
     if not students:
         raise AttendanceError("This class has no students yet.")
     absent = set(absent_ids) & {s.pk for s in students}
-    taken_by = entry.faculty if user.is_admin_role else user
+    # Counted under the subject actually taught and credited to whoever took the period.
+    subject = adjustment.subject_taught if adjustment else entry.subject
+    if adjustment:
+        taken_by = adjustment.substitute
+    else:
+        taken_by = entry.faculty if user.is_admin_role else user
     try:
         with transaction.atomic():
             session = AttendanceSession.objects.create(
-                school_class=school_class, date=date, period_no=period_no, subject=entry.subject,
+                school_class=school_class, date=date, period_no=period_no, subject=subject,
                 taken_by=taken_by, scheduled_subject=entry.subject, scheduled_faculty=entry.faculty,
-                topic=topic, remarks=(remarks or "").strip())
+                adjustment=adjustment, topic=topic, remarks=(remarks or "").strip())
             AttendanceRecord.objects.bulk_create(
                 [AttendanceRecord(session=session, student=s, present=s.pk not in absent) for s in students])
     except IntegrityError:

@@ -98,3 +98,26 @@ def is_holiday(date: datetime.date, school_class=None) -> bool:
     if school_class is None:
         return qs.filter(school_class__isnull=True).exists()
     return qs.filter(models.Q(school_class__isnull=True) | models.Q(school_class=school_class)).exists()
+
+
+class Setting(models.Model):
+    """Small key/value store for admin-editable settings."""
+    key = models.CharField(max_length=60, unique=True)
+    value = models.CharField(max_length=200)
+
+
+SETTING_DEFAULTS = {"forenoon_last_period": "4"}
+
+
+def get_setting(key):
+    row = Setting.objects.filter(key=key).first()
+    return row.value if row else SETTING_DEFAULTS[key]
+
+
+def set_setting(key, value):
+    Setting.objects.update_or_create(key=key, defaults={"value": str(value)})
+
+
+def forenoon_last_period():
+    """Periods 1..N are the forenoon; the rest are the afternoon."""
+    return int(get_setting("forenoon_last_period"))

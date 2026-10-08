@@ -3,6 +3,8 @@
 {% block content %}
 <h1>{% if session %}Edit attendance{% else %}Mark attendance{% endif %}</h1>
 <div class="card">
+ {% if adjustment %}<span class="badge warn">Adjustment for {{ adjustment.original_faculty.full_name }}</span>
+ {% if adjustment.original_subject_id != adjustment.subject_taught_id %}<div class="muted">Timetable subject: {{ adjustment.original_subject.name }} · subject to be taught below</div>{% endif %}<br>{% endif %}
  <b>{{ subject.name }}</b> <span class="muted">({{ subject.code }})</span><br>
  {{ c.full_name }}<br>
  <span class="muted">{{ date|date:"l, j F Y" }} · Period {{ period }}{% if entry %} · {{ entry.start_time|time:"H:i" }}–{{ entry.end_time|time:"H:i" }}{% endif %} · {{ faculty.full_name }}</span>

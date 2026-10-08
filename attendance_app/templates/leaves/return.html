@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Offer a return{% endblock %}
+{% block content %}
+<h1>Offer a return</h1>
+<p class="muted">Take one of the periods of a colleague who covered for you, on another date. They will be asked to accept.</p>
+<form method="get" class="card filters">
+ <div><label>Colleague who covered for you</label><select name="who">{% for u in covering %}<option value="{{ u.pk }}" {% if chosen == u %}selected{% endif %}>{{ u.full_name }}</option>{% endfor %}</select></div>
+ <div><label>Date</label><input type="date" name="date" value="{{ date|date:'Y-m-d' }}" {% if not user.is_admin_role %}min="{{ today|date:'Y-m-d' }}"{% endif %}></div>
+ <div class="actions"><button class="btn primary" type="submit">Show their periods</button></div>
+</form>
+{% if chosen and date %}
+ <form method="post" class="card">{% csrf_token %}
+ <input type="hidden" name="who" value="{{ chosen.pk }}"><input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+ <h2>{{ chosen.full_name }}'s periods on {{ date|date:"D j M" }} that you can take</h2>
+ {% for c, e, subjects in candidates %}
+  <div class="card"><div class="choice"><input type="radio" name="slot" id="slot{{ forloop.counter }}" value="{{ c.pk }}:{{ e.period_no }}" required>
+   <label for="slot{{ forloop.counter }}">P{{ e.period_no }} · {{ e.subject.name }} · {{ c.name }}</label></div></div>
+ {% empty %}<p class="muted">None - they have no periods that day, or you are not free / eligible for them.</p>{% endfor %}
+ {% if candidates %}
+  <label>Subject you will teach</label>
+  <div class="choices inline"><div class="choice"><input type="radio" id="m_same" name="mode" value="same" checked><label for="m_same">Same subject</label></div>
+   <div class="choice"><input type="radio" id="m_diff" name="mode" value="diff"><label for="m_diff">Different subject</label></div></div>
+  <select name="subj" id="subj" style="display:none">{% for c, e, subjects in candidates|slice:":1" %}{% for s in subjects %}<option value="{{ s.pk }}">{{ s.name }}</option>{% endfor %}{% endfor %}</select>
+  <div class="actions"><button class="btn primary" type="submit">Offer this period</button></div>
+ {% endif %}</form>
+ <script>var d=document.getElementById('m_diff'),s=document.getElementById('subj');if(d){document.querySelectorAll('input[name=mode]').forEach(function(r){r.addEventListener('change',function(){s.style.display=d.checked?'block':'none'})})}</script>
+{% endif %}
+<div class="actions"><a class="btn" href="{% url 'leave_detail' req.pk %}">Back</a></div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Leave{% endblock %}
+{% block content %}
+<div class="row"><h1>Leave requests</h1><a class="btn primary" href="{% url 'leave_new_admin' %}">+ Enter leave for faculty</a></div>
+<div class="actions"><a class="btn small" href="{% url 'unadjusted' %}">Unadjusted periods</a>
+ <a class="btn small" href="{% url 'leave_balances' %}">Leave balances</a>
+ <a class="btn small" href="{% url 'leave_type_list' %}">Leave types</a>
+ <a class="btn small" href="{% url 'period_settings' %}">Forenoon / afternoon</a></div>
+{% if waiting %}<p class="alert"><b>{{ waiting }} request{{ waiting|pluralize }} waiting for your approval</b> · <a href="?status=awaiting_admin">Show</a></p>{% endif %}
+<form method="get" class="card filters"><div><label>Status</label><select name="status"><option value="">All (except drafts)</option>
+ {% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+ <div class="actions"><button class="btn primary" type="submit">Filter</button></div></form>
+{% for r in requests %}
+<a class="card" style="display:block;text-decoration:none;color:inherit" href="{% url 'leave_detail' r.pk %}">
+ <div class="row"><b>{{ r.faculty.full_name }} · {{ r.leave_type.name }}</b>
+  <span class="badge {% if r.status == 'approved' %}{% elif r.status == 'rejected' or r.status == 'cancelled' %}off{% else %}warn{% endif %}">{{ r.get_status_display }}</span></div>
+ <div class="muted">{{ r.from_date|date:"j M Y" }}{% if r.to_date != r.from_date %} – {{ r.to_date|date:"j M Y" }}{% endif %} · {{ r.get_scope_display }}{% if r.entered_by_admin %} · entered by admin{% endif %}</div>
+</a>
+{% empty %}<div class="card muted">No leave requests.</div>{% endfor %}
+{% endblock %}

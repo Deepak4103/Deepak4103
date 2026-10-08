@@ -23,6 +23,7 @@ urlpatterns = [
     path("subjects/<int:pk>/delete/", views.subject_delete, name="subject_delete"),
     path("classes/<int:class_pk>/allotment/", views.allotment, name="allotment"),
 
+    path("settings/periods/", views.period_settings, name="period_settings"),
     path("holidays/", views.holiday_list, name="holiday_list"),
     path("holidays/add/", views.holiday_add, name="holiday_add"),
     path("holidays/<int:pk>/edit/", views.holiday_edit, name="holiday_edit"),
