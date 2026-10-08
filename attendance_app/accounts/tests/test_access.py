@@ -39,6 +39,13 @@ class AccessTests(TestCase):
         self.client.force_login(self.fac)
         self.assertRedirects(self.client.get("/"), reverse("faculty_home"))
 
+    def test_logout_returns_to_the_login_page(self):
+        for user in (self.admin, self.fac):
+            self.client.force_login(user)
+            r = self.client.post(reverse("logout"))
+            self.assertRedirects(r, reverse("login"))
+            self.assertEqual(self.client.get(reverse("home")).status_code, 302)     # really logged out
+
     def test_deactivated_faculty_cannot_login(self):
         self.fac.is_active = False
         self.fac.save()
