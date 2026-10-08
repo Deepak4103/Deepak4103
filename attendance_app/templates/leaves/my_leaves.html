@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}My leave{% endblock %}
+{% block content %}
+<div class="row"><h1>My leave</h1><a class="btn primary" href="{% url 'leave_apply' %}">Apply for leave</a></div>
+<div class="card"><h2>Balance this year</h2>
+ <div class="tablewrap"><table><tr><th>Type</th><th>Allowed</th><th>Used</th><th>Waiting</th><th>Left</th></tr>
+ {% for b in balance %}<tr><td>{{ b.type.name }}</td><td>{{ b.allowed }}</td><td>{{ b.used }}</td><td>{{ b.waiting }}</td>
+  <td>{% if b.exhausted %}<span class="badge off">Exhausted</span>{% else %}<b>{{ b.remaining }}</b>{% endif %}</td></tr>{% endfor %}</table></div>
+ <p class="muted">Days are deducted when the admin approves a leave.</p></div>
+{% for r in requests %}
+<a class="card" style="display:block;text-decoration:none;color:inherit" href="{% url 'leave_detail' r.pk %}">
+ <div class="row"><b>{{ r.leave_type.name }} · {{ r.from_date|date:"j M" }}{% if r.to_date != r.from_date %} – {{ r.to_date|date:"j M Y" }}{% else %} {{ r.from_date|date:"Y" }}{% endif %}</b>
+  <span class="badge {% if r.status == 'approved' %}{% elif r.status in 'rejected cancelled' %}off{% else %}warn{% endif %}">{{ r.get_status_display }}</span></div>
+ <div class="muted">{{ r.get_scope_display }}{% if r.scope == 'periods' %} ({{ r.periods }}){% endif %}{% if r.entered_by_admin %} · entered by admin{% endif %}</div>
+</a>
+{% empty %}<div class="card muted">You have not applied for any leave.</div>{% endfor %}
+{% endblock %}

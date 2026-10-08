@@ -1,0 +1,4 @@
+<div class="tablewrap"><table class="ttgrid"><tr><th>Period</th>{% for d in days %}<th>{{ d|slice:":3" }}</th>{% endfor %}</tr>
+{% for row in grid %}<tr><th>P{{ row.period }}{% if row.times %}<br><span class="muted">{{ row.times.0 }}–{{ row.times.1 }}</span>{% endif %}</th>
+ {% for cell in row.cells %}<td>{% if cell %}<b>{{ cell.subject.code }}</b><br><span class="muted">{{ cell.faculty.full_name }}</span>{% else %}<span class="muted">–</span>{% endif %}</td>{% endfor %}</tr>{% endfor %}
+</table></div>

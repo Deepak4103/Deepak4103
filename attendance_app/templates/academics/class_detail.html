@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}{{ c.name }}{% endblock %}
+{% block content %}
+<div class="row"><h1>{{ c.full_name }}</h1></div>
+<div class="actions">
+ <a class="btn small" href="{% url 'class_edit' c.pk %}">Edit class</a>
+ <a class="btn small danger" href="{% url 'class_delete' c.pk %}">Delete class</a>
+ <a class="btn small primary" href="{% url 'timetable_list' c.pk %}">Timetable</a>
+ <a class="btn small" href="{% url 'class_list' %}">All classes</a>
+</div>
+
+<div class="card">
+ <div class="row"><h2>Subjects ({{ subjects|length }})</h2>
+  <div class="actions"><a class="btn small primary" href="{% url 'subject_add' c.pk %}">+ Add subject</a>
+  <a class="btn small" href="{% url 'allotment' c.pk %}">Allot faculty</a></div></div>
+ <div class="tablewrap"><table><tr><th>Subject</th><th>Code</th><th>Faculty</th><th></th></tr>
+ {% for s in subjects %}<tr><td>{{ s.name }}</td><td>{{ s.code }}</td>
+  <td>{% if s.allotment %}{{ s.allotment.faculty.full_name }}{% else %}<span class="badge warn">Not allotted</span>{% endif %}</td>
+  <td><a href="{% url 'subject_edit' s.pk %}">Edit</a> · <a href="{% url 'subject_delete' s.pk %}">Delete</a></td></tr>
+ {% empty %}<tr><td colspan="4" class="muted">No subjects yet.</td></tr>{% endfor %}</table></div>
+</div>
+
+<div class="card">
+ <div class="row"><h2>Students ({{ students|length }})</h2>
+  <div class="actions"><a class="btn small primary" href="{% url 'student_add' c.pk %}">+ Add student</a>
+  <a class="btn small" href="{% url 'student_upload' c.pk %}">Bulk upload</a></div></div>
+ <div class="tablewrap"><table><tr><th>Roll no</th><th>Name</th><th></th></tr>
+ {% for s in students %}<tr><td>{{ s.roll_no }}</td><td>{{ s.name }}</td>
+  <td><a href="{% url 'student_edit' s.pk %}">Edit</a> · <a href="{% url 'student_delete' s.pk %}">Delete</a></td></tr>
+ {% empty %}<tr><td colspan="3" class="muted">No students yet.</td></tr>{% endfor %}</table></div>
+</div>
+{% endblock %}

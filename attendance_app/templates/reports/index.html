@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h1>Reports</h1>
+<p class="muted">Every report can be filtered by class, subject, faculty and dates, and exported to Excel or PDF. Percentages use only the classes actually held, under the subject actually taught.</p>
+<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">
+{% for r in reports %}<a class="card" style="text-decoration:none;color:inherit" href="{% url 'report_view' r.slug %}"><b>{{ r.title }}</b><div class="muted">{{ r.description }}</div></a>{% endfor %}
+</div>
+{% endblock %}

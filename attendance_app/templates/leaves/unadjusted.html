@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Unadjusted periods{% endblock %}
+{% block content %}
+<h1>Unadjusted periods</h1>
+<p class="muted">Periods in a leave with no substitute fixed yet, or where the substitute has not accepted. Nearest dates first.</p>
+{% for a in items %}
+<a class="card" style="display:block;text-decoration:none;color:inherit" href="{% url 'leave_detail' a.leave_request_id %}">
+ <div class="row"><b>{{ a.date|date:"D j M" }} · P{{ a.period_no }}{% if a.date == today %} <span class="badge off">Today</span>{% elif a.date < today %} <span class="badge off">Past</span>{% endif %}</b>
+  <span class="badge warn">{% if a.status == 'pending' %}Awaiting {{ a.substitute.full_name }}{% elif a.status == 'declined' %}Declined by {{ a.substitute.full_name }}{% else %}No substitute{% endif %}</span></div>
+ <div>{{ a.original_subject.name }} · {{ a.school_class.name }}</div>
+ <div class="muted">{{ a.original_faculty.full_name }} on {{ a.leave_request.leave_type.name }} ({{ a.leave_request.get_status_display }})</div>
+</a>
+{% empty %}<div class="card muted">Nothing to adjust. ✔</div>{% endfor %}
+<div class="actions"><a class="btn" href="{% url 'leave_list' %}">Back to leave</a></div>
+{% endblock %}

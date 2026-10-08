@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Timetable grid{% endblock %}
+{% block content %}
+<h1>Weekly grid: {{ c.name }}</h1>
+<p class="muted">Leave a slot as "Free" for no class. Choosing a subject fills in its allotted faculty; you can change it. A new version (from a future date) is safer than editing one already in force.</p>
+{% if errors %}<ul class="msgs">{% for e in errors %}<li class="error">{{ e }}</li>{% endfor %}</ul>{% endif %}
+<form method="post">{% csrf_token %}
+<div class="card">
+ <label for="eff">Effective from</label><input id="eff" type="date" name="effective_from" value="{{ effective_value }}" required>
+ <h2>Period timings (same every day)</h2>
+ <div class="timings">{% for p in periods %}
+  <div><b>P{{ p.no }}</b> <input type="time" name="start_{{ p.no }}" value="{{ p.start }}"> <input type="time" name="end_{{ p.no }}" value="{{ p.end }}"></div>{% endfor %}</div>
+</div>
+<div class="daygrid">
+{% for day in day_cards %}
+ <div class="card"><h2>{{ day.name }}</h2>
+ {% for cell in day.cells %}
+  <div class="slot"><b>P{{ cell.period }}</b>
+   <select name="{{ cell.s_name }}" class="subj" data-target="{{ cell.f_name }}" aria-label="{{ day.name }} period {{ cell.period }} subject">
+    <option value="">Free</option>
+    {% for s in subjects %}<option value="{{ s.pk }}" data-fac="{% if s.allotment %}{{ s.allotment.faculty_id }}{% endif %}" {% if cell.subject_id == s.pk %}selected{% endif %}>{{ s.code }} · {{ s.name }}</option>{% endfor %}
+   </select>
+   <select name="{{ cell.f_name }}" id="{{ cell.f_name }}" aria-label="{{ day.name }} period {{ cell.period }} faculty">
+    <option value="">Faculty (auto)</option>
+    {% for f in faculty %}<option value="{{ f.pk }}" {% if cell.faculty_id == f.pk %}selected{% endif %}>{{ f.full_name }}</option>{% endfor %}
+   </select></div>
+ {% endfor %}</div>
+{% endfor %}
+</div>
+<div class="actions"><button class="btn primary" type="submit">Save timetable</button>
+ <a class="btn" href="{% url 'timetable_list' c.pk %}">Cancel</a></div>
+</form>
+<script>
+document.querySelectorAll('select.subj').forEach(function(sel){
+  sel.addEventListener('change', function(){
+    var fac = document.getElementById(sel.dataset.target);
+    var opt = sel.options[sel.selectedIndex];
+    if(!sel.value){ fac.value=''; } else if(opt.dataset.fac){ fac.value=opt.dataset.fac; }
+  });
+});
+</script>
+{% endblock %}

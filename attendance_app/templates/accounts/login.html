@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div class="login card">
+ <h1>College Attendance</h1>
+ <form method="post">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <label for="id_username">User ID</label>{{ form.username }}
+  <label for="id_password">Password</label>{{ form.password }}
+  <input type="hidden" name="next" value="{{ next }}">
+  <div class="actions"><button class="btn primary block" type="submit">Log in</button></div>
+ </form>
+ <p class="muted">Forgot your password? Ask the admin to reset it.</p>
+</div>
+{% endblock %}

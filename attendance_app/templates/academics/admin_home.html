@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Admin dashboard</h1>
+<a class="card" style="display:block;text-decoration:none;color:inherit" href="{% url 'monitor' %}">
+ <b>Today's attendance ({{ today }})</b>
+ <div>{{ summary.done }} periods entered · <b>{{ summary.pending }} pending</b> → open monitoring</div></a>
+{% if waiting %}<a class="alert" style="display:block;text-decoration:none;color:inherit" href="{% url 'leave_list' %}?status=awaiting_admin"><b>{{ waiting }} leave request{{ waiting|pluralize }} waiting for your approval</b></a>{% endif %}
+<div class="card"><div class="row"><h2 style="margin:0">Unadjusted periods ({{ unadjusted|length }})</h2><a class="btn small" href="{% url 'unadjusted' %}">See all</a></div>
+ {% for a in unadjusted|slice:":5" %}<div style="padding:8px 0;border-top:1px solid var(--line)"><a href="{% url 'leave_detail' a.leave_request_id %}"><b>{{ a.date|date:"D j M" }} · P{{ a.period_no }}</b></a>
+  {{ a.original_subject.name }} · {{ a.school_class.name }} · {{ a.original_faculty.full_name }}
+  <span class="badge warn">{% if a.status == 'pending' %}awaiting {{ a.substitute.full_name }}{% elif a.status == 'declined' %}declined{% else %}no substitute{% endif %}</span></div>
+ {% empty %}<p class="muted">Every period in a leave has a substitute. ✔</p>{% endfor %}</div>
+<div class="grid">
+{% for label, n, url in stats %}<a class="card stat" href="{% url url %}"><b>{{ n }}</b>{{ label }}</a>{% endfor %}
+</div>
+<div class="card"><h2>Setup checklist</h2>
+ <ol>
+  <li><a href="{% url 'class_list' %}">Create classes</a>, then add their students and subjects</li>
+  <li><a href="{% url 'faculty_list' %}">Create faculty accounts</a></li>
+  <li>Open a class → <b>Allot faculty</b> to its subjects</li>
+  <li><a href="{% url 'holiday_list' %}">Add holidays</a></li>
+  <li>Use <a href="{% url 'report_index' %}">Reports</a> for percentages, shortage list, logs and exports</li>
+  <li><a href="{% url 'leave_type_list' %}">Check leave types</a> and the <a href="{% url 'period_settings' %}">forenoon/afternoon split</a></li>
+  <li>Open a class → <b>Timetable</b> to upload or edit its weekly timetable</li>
+ </ol>
+ <p class="muted"></p>
+</div>
+{% endblock %}

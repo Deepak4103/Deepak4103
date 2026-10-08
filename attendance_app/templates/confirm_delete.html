@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Delete{% endblock %}
+{% block content %}
+<h1>Delete?</h1>
+<form method="post" class="card">{% csrf_token %}
+ <p>Are you sure you want to delete <b>{{ obj }}</b>?</p>
+ {% if detail %}<p class="muted">{{ detail }}</p>{% endif %}
+ <p class="muted">This cannot be undone.</p>
+ <div class="actions">
+  <button class="btn danger" type="submit">Yes, delete</button>
+  <a class="btn" href="javascript:history.back()">No, go back</a>
+ </div>
+</form>
+{% endblock %}

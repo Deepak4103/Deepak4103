@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Faculty{% endblock %}
+{% block content %}
+<div class="row"><h1>Faculty</h1><a class="btn primary" href="{% url 'faculty_add' %}">+ Add faculty</a></div>
+<div class="card tablewrap"><table>
+<tr><th>Name</th><th>User ID</th><th>Status</th><th></th></tr>
+{% for f in faculty %}
+<tr><td>{{ f.full_name }}</td><td>{{ f.username }}</td>
+ <td>{% if f.is_active %}<span class="badge">Active</span>{% else %}<span class="badge off">Deactivated</span>{% endif %}</td>
+ <td><div class="actions">
+  <a class="btn small" href="{% url 'faculty_edit' f.pk %}">Edit</a>
+  <a class="btn small" href="{% url 'faculty_reset_password' f.pk %}">Reset password</a>
+  <form method="post" action="{% url 'faculty_toggle_active' f.pk %}">{% csrf_token %}
+   <button class="btn small {% if f.is_active %}danger{% endif %}" type="submit">{% if f.is_active %}Deactivate{% else %}Activate{% endif %}</button></form>
+ </div></td></tr>
+{% empty %}<tr><td colspan="4" class="muted">No faculty yet.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

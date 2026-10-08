@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Upload timetable{% endblock %}
+{% block content %}
+<h1>Upload timetable: {{ c.name }}</h1>
+<div class="card">
+ <p>Columns: <b>day, period, start_time, end_time, subject, faculty</b>. Use day names (Mon–Sat), period 1–7, times like 09:00, the subject <i>code</i> and the faculty <i>User ID</i>. A period must have the same times on every day.</p>
+ <div class="actions"><a class="btn small" href="{% url 'timetable_template' 'xlsx' %}">Download blank Excel template</a>
+ <a class="btn small" href="{% url 'timetable_template' 'csv' %}">Download blank CSV template</a></div>
+ <details><summary>Subject codes and faculty IDs to use</summary>
+  <p><b>Subjects:</b> {% for s in subjects %}{{ s.code }} ({{ s.name }}){% if not forloop.last %}, {% endif %}{% empty %}none yet{% endfor %}</p>
+  <p><b>Faculty:</b> {% for f in faculty %}{{ f.username }} ({{ f.full_name }}){% if not forloop.last %}, {% endif %}{% endfor %}</p>
+ </details>
+</div>
+<form method="post" enctype="multipart/form-data" class="card">{% csrf_token %}
+ {{ form.non_field_errors }}
+ {% for f in form %}<label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}{% if f.help_text %}<div class="helptext">{{ f.help_text }}</div>{% endif %}{% endfor %}
+ <div class="actions"><button class="btn primary" type="submit">Preview</button>
+ <a class="btn" href="{% url 'timetable_list' c.pk %}">Cancel</a></div>
+</form>
+{% endblock %}

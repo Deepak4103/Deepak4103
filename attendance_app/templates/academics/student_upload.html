@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Upload students{% endblock %}
+{% block content %}
+<h1>Upload students to {{ c.name }}</h1>
+<div class="card">
+ <p>Upload an Excel (.xlsx) or CSV file with the columns <b>roll_no</b> and <b>name</b>. You will see a preview before anything is saved.</p>
+ <div class="actions"><a class="btn small" href="{% url 'student_template' 'xlsx' %}">Download Excel template</a>
+ <a class="btn small" href="{% url 'student_template' 'csv' %}">Download CSV template</a></div>
+</div>
+<form method="post" enctype="multipart/form-data" class="card">{% csrf_token %}
+ {{ form.non_field_errors }}
+ <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>{{ form.file }}{{ form.file.errors }}
+ <div class="actions"><button class="btn primary" type="submit">Preview</button>
+ <a class="btn" href="{% url 'class_detail' c.pk %}">Cancel</a></div>
+</form>
+{% endblock %}

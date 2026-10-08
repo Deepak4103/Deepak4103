@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ rdef.title }}{% endblock %}
+{% block content %}
+<div class="row"><h1>{{ rdef.title }}</h1><a class="btn small" href="{% url 'report_index' %}">All reports</a></div>
+<form method="get" class="card filters">
+ {% for f in form %}<div><label for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f }}{{ f.errors }}</div>{% endfor %}
+ <div class="actions"><button class="btn primary" type="submit">Show report</button></div>
+</form>
+{% if report %}
+<div class="card">
+ <div class="row"><div><b>{{ report.title }}</b><div class="muted">{{ report.subtitle }}</div></div>
+  <div class="actions"><a class="btn small" href="?{{ query }}&export=xlsx">Excel</a><a class="btn small" href="?{{ query }}&export=pdf">PDF</a></div></div>
+ <p class="muted">{{ rows|length }} row{{ rows|length|pluralize }}</p>
+ <div class="tablewrap"><table class="rpt"><tr>{% for c in report.columns %}<th>{{ c }}</th>{% endfor %}</tr>
+ {% for row, flag in rows %}<tr {% if flag == 'bad' %}class="badrow"{% endif %}>{% for v in row %}<td>{{ v }}</td>{% endfor %}</tr>
+ {% empty %}<tr><td colspan="{{ report.columns|length }}" class="muted">No records for these filters.</td></tr>{% endfor %}</table></div>
+ {% for n in report.notes %}<p class="muted">{{ n }}</p>{% endfor %}
+</div>
+{% else %}<div class="card muted">Fix the filters above to see the report{% if rdef.needs_class %} (choose a class){% endif %}.</div>{% endif %}
+{% endblock %}
