@@ -106,7 +106,7 @@ class Setting(models.Model):
     value = models.CharField(max_length=200)
 
 
-SETTING_DEFAULTS = {"forenoon_last_period": "4"}
+SETTING_DEFAULTS = {"forenoon_last_period": "4", "shortage_threshold": "75"}
 
 
 def get_setting(key):
@@ -121,3 +121,8 @@ def set_setting(key, value):
 def forenoon_last_period():
     """Periods 1..N are the forenoon; the rest are the afternoon."""
     return int(get_setting("forenoon_last_period"))
+
+
+def shortage_threshold():
+    """Students below this attendance percentage appear in the shortage list (default 75)."""
+    return int(get_setting("shortage_threshold"))

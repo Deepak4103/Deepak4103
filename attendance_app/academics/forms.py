@@ -65,6 +65,10 @@ class PeriodSettingsForm(forms.Form):
         min_value=1, label="Last forenoon period",
         help_text="Periods up to this number are forenoon; the rest are afternoon (used for half-day leave).")
 
+    shortage_threshold = forms.IntegerField(
+        min_value=1, max_value=100, required=False, label="Attendance shortage threshold (%)",
+        help_text="Students below this overall percentage appear in the shortage list. Default 75.")
+
     def __init__(self, *args, max_period, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["forenoon_last_period"].max_value = max_period - 1

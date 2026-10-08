@@ -103,7 +103,10 @@ class Command(BaseCommand):
                 if day == days[0] and slot.period_no >= 5:
                     continue                                    # leave the latest day's afternoon pending
                 students = list(slot.school_class.students.all())
-                absent = {s.pk for i, s in enumerate(students) if (i * 7 + slot.period_no + n) % 9 == 0}
+                absent = {s.pk for i, s in enumerate(students)
+                          if (i * 7 + slot.period_no + n) % 9 == 0                 # occasional absence
+                          or (i == 2 and (n + slot.period_no) % 2 == 0)            # often absent -> shortage list
+                          or (i == 7 and slot.period_no % 3 == 0)}
                 svc.save_attendance(
                     school_class=slot.school_class, date=day, period_no=slot.period_no, entry=slot.entry,
                     user=slot.entry.faculty, absent_ids=absent,

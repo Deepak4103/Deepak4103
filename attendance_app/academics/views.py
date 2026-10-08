@@ -12,7 +12,7 @@ from . import importing
 from django.conf import settings as dj_settings
 
 from .forms import PeriodSettingsForm, ClassForm, HolidayForm, StudentForm, StudentUploadForm, SubjectForm
-from .models import Allotment, Holiday, SchoolClass, Student, Subject, forenoon_last_period, set_setting
+from .models import Allotment, Holiday, SchoolClass, Student, Subject, forenoon_last_period, set_setting, shortage_threshold
 
 STUDENT_HEADERS = ["roll_no", "name"]
 STUDENT_EXAMPLE = [["21CSE001", "Asha Rao"], ["21CSE002", "Ravi Kumar"]]
@@ -297,11 +297,14 @@ def holiday_delete(request, pk):
 @admin_required
 def period_settings(request):
     form = PeriodSettingsForm(request.POST or None, max_period=dj_settings.PERIODS_PER_DAY,
-                              initial={"forenoon_last_period": forenoon_last_period()})
+                              initial={"forenoon_last_period": forenoon_last_period(),
+                                       "shortage_threshold": shortage_threshold()})
     if request.method == "POST" and form.is_valid():
         set_setting("forenoon_last_period", form.cleaned_data["forenoon_last_period"])
+        if form.cleaned_data["shortage_threshold"]:
+            set_setting("shortage_threshold", form.cleaned_data["shortage_threshold"])
         messages.success(request, "Saved.")
         return redirect("period_settings")
     n = dj_settings.PERIODS_PER_DAY
-    return render(request, "form.html", {"title": f"Forenoon / afternoon periods ({n} periods a day)", "form": form,
+    return render(request, "form.html", {"title": f"Settings ({n} periods a day)", "form": form,
                                          "cancel": "admin_home"})
