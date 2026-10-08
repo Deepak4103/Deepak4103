@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Admin dashboard</h1>
+<div class="grid">
+{% for label, n, url in stats %}<a class="card stat" href="{% url url %}"><b>{{ n }}</b>{{ label }}</a>{% endfor %}
+</div>
+<div class="card"><h2>Setup checklist</h2>
+ <ol>
+  <li><a href="{% url 'class_list' %}">Create classes</a>, then add their students and subjects</li>
+  <li><a href="{% url 'faculty_list' %}">Create faculty accounts</a></li>
+  <li>Open a class → <b>Allot faculty</b> to its subjects</li>
+  <li><a href="{% url 'holiday_list' %}">Add holidays</a></li>
+ </ol>
+ <p class="muted">Timetable, attendance monitoring and leave management come in the next phases.</p>
+</div>
+{% endblock %}

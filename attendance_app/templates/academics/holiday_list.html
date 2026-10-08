@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Holidays{% endblock %}
+{% block content %}
+<div class="row"><h1>Holidays</h1><a class="btn primary" href="{% url 'holiday_add' %}">+ Add holiday</a></div>
+<p class="muted">Sundays are treated as non-working days automatically.</p>
+<div class="card tablewrap"><table><tr><th>From</th><th>To</th><th>Reason</th><th>Applies to</th><th></th></tr>
+{% for h in holidays %}<tr><td>{{ h.from_date }}</td><td>{{ h.to_date }}</td><td>{{ h.reason }}</td>
+ <td>{{ h.school_class.name|default:"Whole college" }}</td>
+ <td><a href="{% url 'holiday_edit' h.pk %}">Edit</a> · <a href="{% url 'holiday_delete' h.pk %}">Delete</a></td></tr>
+{% empty %}<tr><td colspan="5" class="muted">No holidays added.</td></tr>{% endfor %}</table></div>
+{% endblock %}

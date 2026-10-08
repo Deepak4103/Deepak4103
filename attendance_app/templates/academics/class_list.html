@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Classes{% endblock %}
+{% block content %}
+<div class="row"><h1>Classes</h1><a class="btn primary" href="{% url 'class_add' %}">+ Add class</a></div>
+{% for c in classes %}
+<a class="card" style="display:block;text-decoration:none;color:inherit" href="{% url 'class_detail' c.pk %}"><b>{{ c.full_name }}</b><div class="muted">{{ c.name }}</div></a>
+{% empty %}<div class="card muted">No classes yet.</div>{% endfor %}
+{% endblock %}

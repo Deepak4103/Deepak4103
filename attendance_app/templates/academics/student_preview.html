@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Preview{% endblock %}
+{% block content %}
+<h1>Preview: {{ c.name }}</h1>
+<div class="card">
+ <p><span class="badge">{{ valid|length }} will be added</span> {% if errors %}<span class="badge off">{{ errors|length }} will be skipped</span>{% endif %}</p>
+ {% if errors %}<h2>Rows with problems</h2><div class="tablewrap"><table><tr><th>Line</th><th>Roll</th><th>Name</th><th>Problem</th></tr>
+ {% for line, roll, name, msg in errors %}<tr><td>{{ line }}</td><td>{{ roll }}</td><td>{{ name }}</td><td>{{ msg }}</td></tr>{% endfor %}</table></div>{% endif %}
+ {% if valid %}<h2>Students to add</h2><div class="tablewrap"><table><tr><th>Roll no</th><th>Name</th></tr>
+ {% for v in valid %}<tr><td>{{ v.roll_no }}</td><td>{{ v.name }}</td></tr>{% endfor %}</table></div>{% endif %}
+ <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="confirm">
+  {% if valid %}<button class="btn primary" type="submit">Save {{ valid|length }} students</button>{% endif %}
+  <a class="btn" href="{% url 'student_upload' c.pk %}">Upload a different file</a>
+ </form>
+</div>
+{% endblock %}

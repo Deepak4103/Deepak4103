@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Allotment{% endblock %}
+{% block content %}
+<h1>Allot faculty: {{ c.name }}</h1>
+<form method="post" class="card">{% csrf_token %}
+ {% for s, a in rows %}
+  <label for="s{{ s.pk }}">{{ s.name }} ({{ s.code }})</label>
+  <select id="s{{ s.pk }}" name="subject_{{ s.pk }}">
+   <option value="">— not allotted —</option>
+   {% for f in faculty %}<option value="{{ f.pk }}" {% if a and a.faculty_id == f.pk %}selected{% endif %}>{{ f.full_name }}</option>{% endfor %}
+  </select>
+ {% empty %}<p class="muted">Add subjects to this class first.</p>{% endfor %}
+ <div class="actions"><button class="btn primary" type="submit">Save allotment</button>
+ <a class="btn" href="{% url 'class_detail' c.pk %}">Cancel</a></div>
+</form>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% load static %}<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Attendance{% endblock %} · College Attendance</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head><body>
+{% if user.is_authenticated %}
+<header class="topbar"><div class="topbar-in">
+ <a class="brand" href="{% url 'home' %}">📋 Attendance</a>
+ <button class="btn small menu-btn" type="button" onclick="document.getElementById('nav').classList.toggle('open')">Menu ☰</button>
+ <nav class="nav" id="nav">
+  {% if user.is_admin_role %}
+   <a href="{% url 'admin_home' %}">Dashboard</a>
+   <a href="{% url 'class_list' %}">Classes</a>
+   <a href="{% url 'faculty_list' %}">Faculty</a>
+   <a href="{% url 'holiday_list' %}">Holidays</a>
+  {% else %}
+   <a href="{% url 'faculty_home' %}">Home</a>
+  {% endif %}
+  <a href="{% url 'password_change' %}">Password</a>
+  <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Log out ({{ user.username }})</button></form>
+ </nav>
+</div></header>
+{% endif %}
+<main>
+{% if messages %}<ul class="msgs">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+{% block content %}{% endblock %}
+</main></body></html>
