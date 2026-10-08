@@ -44,3 +44,4 @@ th{font-size:.8rem;text-transform:uppercase;letter-spacing:.04em;color:var(--mut
 .badge.off{background:var(--badbg);color:var(--bad)}.badge.warn{background:var(--warnbg);color:var(--warn)}
 .login{max-width:420px;margin:8vh auto}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+td a{display:inline-block;padding:10px 6px}
