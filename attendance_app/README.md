@@ -40,10 +40,9 @@ You need **Python 3.10 or newer** ([python.org/downloads](https://www.python.org
    ```bash
    git clone https://github.com/Deepak4103/Deepak4103.git
    cd Deepak4103
-   git checkout claude/student-attendance-management-9tjmjk     # or the branch you merged it into
    cd attendance_app
    ```
-   (No git? On GitHub choose the branch, click **Code → Download ZIP**, unzip, and open a terminal in the `attendance_app` folder.)
+   (No git? On GitHub click **Code → Download ZIP**, unzip, and open a terminal in the `attendance_app` folder.)
 
 2. **Create a virtual environment and install the requirements.**
    - Mac / Linux
@@ -139,7 +138,6 @@ web app must be re-confirmed from time to time). Replace `USERNAME` below with y
    ```bash
    git clone https://github.com/Deepak4103/Deepak4103.git
    cd Deepak4103
-   git checkout claude/student-attendance-management-9tjmjk        # or your merged branch
    cd attendance_app
    mkvirtualenv --python=python3.12 attendance                      # use a Python version PythonAnywhere offers (3.10+)
    pip install -r requirements.txt
