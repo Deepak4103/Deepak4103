@@ -73,6 +73,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # PBKDF2 (Django default) - passwords are always stored hashed.
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "login"
 
 LANGUAGE_CODE = "en-in"
 TIME_ZONE = "Asia/Kolkata"
