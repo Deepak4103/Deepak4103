@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Timetable preview{% endblock %}
+{% block content %}
+<h1>Preview: {{ c.name }}</h1>
+<div class="card">
+ <p>Effective from <b>{{ effective_from }}</b> · {{ count }} periods read.</p>
+ {% if row_errors or rule_errors %}
+  <p><span class="badge off">Not saved yet - please fix the file and upload again</span></p>
+  <ul>{% for line, msg in row_errors %}<li>Line {{ line }}: {{ msg }}</li>{% endfor %}{% for msg in rule_errors %}<li>{{ msg }}</li>{% endfor %}</ul>
+ {% elif not count %}<p class="muted">The file had no timetable rows.</p>{% endif %}
+ {% include "timetable/_grid_table.html" %}
+ <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="confirm">
+  {% if can_save %}<button class="btn primary" type="submit">Save this timetable</button>{% endif %}
+  <a class="btn" href="{% url 'timetable_upload' c.pk %}">Upload a different file</a>
+ </form>
+</div>
+{% endblock %}

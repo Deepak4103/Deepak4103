@@ -43,7 +43,71 @@ class Command(BaseCommand):
                 s, _ = Subject.objects.get_or_create(school_class=c, code=code, defaults={"name": sname})
                 Allotment.objects.get_or_create(subject=s, defaults={"faculty": fac[f]})
         import datetime
-        Holiday.objects.get_or_create(from_date=datetime.date(2026, 10, 2), to_date=datetime.date(2026, 10, 2),
-                                      defaults={"reason": "Gandhi Jayanti"})
+
+        from attendance.services import today
+        self.start = today() - datetime.timedelta(days=9)      # demo timetable starts 9 days ago
+        holiday = today() - datetime.timedelta(days=6)
+        Holiday.objects.get_or_create(from_date=holiday, to_date=holiday, defaults={"reason": "Festival holiday"})
+        self._timetables(fac)
+        self._attendance()
         self.stdout.write(self.style.SUCCESS(
             f"Demo data loaded. Faculty logins: ravi / sneha / anil, password {DEMO_PASSWORD}"))
+
+    TIMES = [("09:00", "09:50"), ("09:50", "10:40"), ("10:50", "11:40"), ("11:40", "12:30"),
+             ("13:30", "14:20"), ("14:20", "15:10"), ("15:10", "16:00")]
+
+    def _timetables(self, fac):
+        """Mon-Sat, periods 1-6 filled (period 7 free). Class B is the class A pattern shifted by one subject,
+        so no teacher is ever in two classes at the same time."""
+        from datetime import time
+
+        from timetable.models import Timetable, TimetableEntry
+        for offset, section in ((0, "A"), (1, "B")):
+            c = SchoolClass.objects.get(branch="CSE", year=2, semester=1, section=section)
+            subjects = list(c.subjects.order_by("code"))
+            tt, created = Timetable.objects.get_or_create(school_class=c, effective_from=self.start)
+            if not created:
+                continue
+            rows = []
+            for day in range(6):
+                for p in range(1, 7):
+                    s = subjects[(day + p + offset) % 3]
+                    start, end = self.TIMES[p - 1]
+                    rows.append(TimetableEntry(
+                        timetable=tt, day=day, period_no=p, subject=s, faculty=s.allotment.faculty,
+                        start_time=time.fromisoformat(start), end_time=time.fromisoformat(end)))
+            TimetableEntry.objects.bulk_create(rows)
+
+    def _attendance(self):
+        """Fill attendance for the last few working days so reports have data. Some periods are left pending."""
+        import datetime
+
+        from attendance import services as svc
+        from attendance.models import AttendanceSession
+        if AttendanceSession.objects.exists():
+            return
+        today = svc.today()
+        index = svc.ScheduleIndex(self.start, today)
+        days = []                                  # working days since the timetable began, newest first
+        d = today - datetime.timedelta(days=1)
+        while d >= self.start:
+            if not index.holiday_reason(d, None):
+                days.append(d)
+            d -= datetime.timedelta(days=1)
+        topics = ["Introduction", "Core concepts", "Worked examples", "Problem solving", "Revision"]
+        for n, day in enumerate(reversed(days)):
+            for slot in index.slots(day):
+                if day == days[0] and slot.period_no >= 5:
+                    continue                                    # leave the latest day's afternoon pending
+                students = list(slot.school_class.students.all())
+                absent = {s.pk for i, s in enumerate(students) if (i * 7 + slot.period_no + n) % 9 == 0}
+                svc.save_attendance(
+                    school_class=slot.school_class, date=day, period_no=slot.period_no, entry=slot.entry,
+                    user=slot.entry.faculty, absent_ids=absent,
+                    topic=f"{slot.entry.subject.name}: {topics[n % len(topics)]}")
+        # today: first two periods already entered
+        for slot in index.slots(today):
+            if slot.period_no <= 2:
+                svc.save_attendance(school_class=slot.school_class, date=today, period_no=slot.period_no,
+                                    entry=slot.entry, user=slot.entry.faculty, absent_ids=set(),
+                                    topic=f"{slot.entry.subject.name}: Introduction")

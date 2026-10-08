@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Records{% endblock %}
+{% block content %}
+<h1>{% if user.is_admin_role %}Attendance records{% else %}My past attendance and logs{% endif %}</h1>
+<form method="get" class="card filters">
+ <div><label>Class</label><select name="class"><option value="">All</option>{% for c in classes %}<option value="{{ c.pk }}" {% if g.class == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+ <div><label>Subject</label><select name="subject"><option value="">All</option>{% for s in subjects %}<option value="{{ s.pk }}" {% if g.subject == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }} · {{ s.school_class.name }}</option>{% endfor %}</select></div>
+ {% if user.is_admin_role %}<div><label>Faculty</label><select name="faculty"><option value="">All</option>{% for f in faculty %}<option value="{{ f.pk }}" {% if g.faculty == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.full_name }}</option>{% endfor %}</select></div>{% endif %}
+ <div><label>From</label><input type="date" name="from" value="{{ g.from }}"></div>
+ <div><label>To</label><input type="date" name="to" value="{{ g.to }}"></div>
+ <div class="actions"><button class="btn primary" type="submit">Filter</button><a class="btn" href="{% url 'records' %}">Clear</a></div>
+</form>
+{% for s in sessions %}
+<a class="card" style="display:block;text-decoration:none;color:inherit" href="{% url 'session_detail' s.pk %}">
+ <div class="row"><b>{{ s.date|date:"D j M Y" }} · P{{ s.period_no }}</b>
+  <span class="muted">{{ s.absent_n }} absent of {{ s.total_n }}</span></div>
+ <div>{{ s.subject.name }} · {{ s.school_class.name }}</div>
+ <div class="muted">{{ s.topic }} · {{ s.taken_by.full_name }}{% if s.unlocked %} · 🔓{% endif %}</div>
+</a>
+{% empty %}<div class="card muted">No records found.</div>{% endfor %}
+{% endblock %}

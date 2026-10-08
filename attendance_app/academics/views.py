@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from accounts.decorators import admin_required, faculty_required
+from accounts.decorators import admin_required
 from accounts.models import User
 
 from . import importing
@@ -25,7 +25,7 @@ def _delete_page(request, obj, back_url_name, back_args=(), detail=""):
         try:
             obj.delete()
         except ProtectedError:
-            messages.error(request, "Cannot delete: it already has attendance records linked to it.")
+            messages.error(request, "Cannot delete: a timetable or attendance records are linked to it.")
         else:
             messages.success(request, "Deleted.")
         return redirect(back_url_name, *back_args)
@@ -43,12 +43,12 @@ def admin_home(request):
         ("Faculty", User.objects.filter(role=User.FACULTY, is_active=True).count(), "faculty_list"),
         ("Holidays", Holiday.objects.count(), "holiday_list"),
     ]
-    return render(request, "academics/admin_home.html", {"stats": stats})
-
-
-@faculty_required
-def faculty_home(request):
-    return render(request, "academics/faculty_home.html")
+    from attendance import services as att
+    today = att.today()
+    index = att.ScheduleIndex(today, today)
+    slots = index.slots(today)
+    summary = {"done": sum(1 for s in slots if s.completed), "pending": sum(1 for s in slots if not s.completed)}
+    return render(request, "academics/admin_home.html", {"stats": stats, "summary": summary, "today": today})
 
 
 def home(request):

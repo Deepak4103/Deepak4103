@@ -18,6 +18,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "accounts",
     "academics",
+    "timetable",
+    "attendance",
 ]
 
 MIDDLEWARE = [
@@ -94,3 +96,6 @@ if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# How many days back the "pending periods" prompt looks for attendance not yet entered.
+PENDING_LOOKBACK_DAYS = 30

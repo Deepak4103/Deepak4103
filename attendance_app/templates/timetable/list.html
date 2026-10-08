@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Timetable{% endblock %}
+{% block content %}
+<h1>Timetable: {{ c.name }}</h1>
+<div class="actions">
+ <a class="btn primary" href="{% url 'timetable_upload' c.pk %}">Upload Excel/CSV</a>
+ <a class="btn" href="{% url 'timetable_new' c.pk %}">+ New version (grid)</a>
+ <a class="btn small" href="{% url 'timetable_template' 'xlsx' %}">Blank template (Excel)</a>
+ <a class="btn small" href="{% url 'timetable_template' 'csv' %}">Blank template (CSV)</a>
+ <a class="btn small" href="{% url 'class_detail' c.pk %}">Back to class</a>
+</div>
+<p class="muted">Each version applies from its start date until the next version begins. Past attendance is never changed by a new version.</p>
+<div class="card tablewrap"><table><tr><th>Effective from</th><th>Status</th><th>Periods</th><th></th></tr>
+{% for v in versions %}<tr><td>{{ v.effective_from }}</td>
+ <td>{% if v == current %}<span class="badge">In force today</span>{% elif v.effective_from > today %}<span class="badge warn">Future</span>{% else %}<span class="muted">Replaced</span>{% endif %}</td>
+ <td>{{ v.entries.count }}</td>
+ <td><a href="{% url 'timetable_grid' v.pk %}">Open / edit grid</a> · <a href="{% url 'timetable_delete' v.pk %}">Delete</a></td></tr>
+{% empty %}<tr><td colspan="4" class="muted">No timetable yet. Upload one or create a version.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

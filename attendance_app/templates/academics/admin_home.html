@@ -2,6 +2,9 @@
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 <h1>Admin dashboard</h1>
+<a class="card" style="display:block;text-decoration:none;color:inherit" href="{% url 'monitor' %}">
+ <b>Today's attendance ({{ today }})</b>
+ <div>{{ summary.done }} periods entered · <b>{{ summary.pending }} pending</b> → open monitoring</div></a>
 <div class="grid">
 {% for label, n, url in stats %}<a class="card stat" href="{% url url %}"><b>{{ n }}</b>{{ label }}</a>{% endfor %}
 </div>
@@ -11,7 +14,8 @@
   <li><a href="{% url 'faculty_list' %}">Create faculty accounts</a></li>
   <li>Open a class → <b>Allot faculty</b> to its subjects</li>
   <li><a href="{% url 'holiday_list' %}">Add holidays</a></li>
+  <li>Open a class → <b>Timetable</b> to upload or edit its weekly timetable</li>
  </ol>
- <p class="muted">Timetable, attendance monitoring and leave management come in the next phases.</p>
+ <p class="muted">Leave management and reports come in the next phases.</p>
 </div>
 {% endblock %}

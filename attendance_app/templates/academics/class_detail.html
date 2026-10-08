@@ -5,6 +5,7 @@
 <div class="actions">
  <a class="btn small" href="{% url 'class_edit' c.pk %}">Edit class</a>
  <a class="btn small danger" href="{% url 'class_delete' c.pk %}">Delete class</a>
+ <a class="btn small primary" href="{% url 'timetable_list' c.pk %}">Timetable</a>
  <a class="btn small" href="{% url 'class_list' %}">All classes</a>
 </div>
 

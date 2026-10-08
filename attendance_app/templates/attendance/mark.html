@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Attendance{% endblock %}
+{% block content %}
+<h1>{% if session %}Edit attendance{% else %}Mark attendance{% endif %}</h1>
+<div class="card">
+ <b>{{ subject.name }}</b> <span class="muted">({{ subject.code }})</span><br>
+ {{ c.full_name }}<br>
+ <span class="muted">{{ date|date:"l, j F Y" }} · Period {{ period }}{% if entry %} · {{ entry.start_time|time:"H:i" }}–{{ entry.end_time|time:"H:i" }}{% endif %} · {{ faculty.full_name }}</span>
+</div>
+
+<form method="post" id="attform">{% csrf_token %}
+ {% if form.non_field_errors %}<ul class="msgs">{% for e in form.non_field_errors %}<li class="error">{{ e }}</li>{% endfor %}</ul>{% endif %}
+ <div class="card">
+  <label for="{{ form.topic.id_for_label }}">{{ form.topic.label }} *</label>
+  {{ form.topic }}{{ form.topic.errors }}
+  <label for="{{ form.remarks.id_for_label }}">{{ form.remarks.label }}</label>
+  {{ form.remarks }}
+ </div>
+
+ <div class="card">
+  <div class="row"><b>Students</b><button type="button" class="btn small" id="allpresent">Reset: all present</button></div>
+  <p class="muted">Everyone is Present. Tap a student to mark Absent.</p>
+  <div class="roll-list">
+  {% for s in students %}
+   <div class="stu">
+    <input type="checkbox" name="absent" value="{{ s.pk }}" id="st{{ s.pk }}" {% if s.pk in absent_ids %}checked{% endif %}>
+    <label for="st{{ s.pk }}"><span class="roll">{{ s.roll_no }}</span><span class="nm">{{ s.name }}</span><span class="state"></span></label>
+   </div>
+  {% empty %}<p class="muted">This class has no students.</p>{% endfor %}
+  </div>
+ </div>
+
+ <div class="stickybar">
+  <div class="counts"><span class="cnt ok"><b id="pc">{% widthratio 1 1 total %}</b> Present</span>
+   <span class="cnt bad"><b id="ac">{{ absent_count }}</b> Absent</span></div>
+  <button class="btn primary" type="submit">{% if session %}Save changes{% else %}Submit attendance{% endif %}</button>
+ </div>
+</form>
+
+{% if audits %}<div class="card"><h2>Change history</h2><ul class="plain">
+ {% for a in audits %}<li class="muted">{{ a.at|date:"j M Y H:i" }} · {{ a.user.full_name }}: {{ a.summary }}</li>{% endfor %}</ul></div>{% endif %}
+
+<script>
+(function(){
+  var boxes=[].slice.call(document.querySelectorAll('.stu input')), total=boxes.length;
+  function upd(){var a=boxes.filter(function(b){return b.checked}).length;
+    document.getElementById('ac').textContent=a; document.getElementById('pc').textContent=total-a;}
+  boxes.forEach(function(b){b.addEventListener('change',upd)});
+  document.getElementById('allpresent').addEventListener('click',function(){boxes.forEach(function(b){b.checked=false});upd();});
+  upd();
+})();
+</script>
+{% endblock %}

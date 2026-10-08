@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h1>Hello, {{ user.full_name }}</h1>
+
+{% if pending %}
+<div class="alert">
+ <b>⚠ {{ pending|length }} period{{ pending|length|pluralize }} waiting for attendance</b>
+ {% if older %}<div>{{ older|length }} from earlier days - please complete these first.</div>{% endif %}
+ <ul class="plain">
+ {% for s in pending %}
+  <li><a class="btn small primary" href="{% url 'mark_attendance' s.school_class.pk s.date s.period_no %}">Mark</a>
+   {% if s.date == today %}<b>Today</b>{% else %}<b>{{ s.date|date:"D j M" }}</b>{% endif %}
+   · P{{ s.period_no }} · {{ s.subject.name }} · {{ s.school_class.name }}</li>
+ {% endfor %}
+ </ul>
+</div>
+{% endif %}
+
+<h2>Today · {{ today|date:"l, j F" }}</h2>
+{% for s in slots %}
+ <a class="card slotcard {{ s.status }}" href="{% url 'mark_attendance' s.school_class.pk s.date s.period_no %}">
+  <div class="row"><b>Period {{ s.period_no }} · {{ s.entry.start_time|time:"H:i" }}–{{ s.entry.end_time|time:"H:i" }}</b>
+   {% if s.completed %}<span class="badge">Completed</span>{% else %}<span class="badge warn">Pending</span>{% endif %}</div>
+  <div>{{ s.subject.name }} <span class="muted">({{ s.subject.code }})</span></div>
+  <div class="muted">{{ s.school_class.full_name }}</div>
+ </a>
+{% empty %}
+ <div class="card muted">No periods for you today{% if today.weekday == 6 %} (Sunday){% endif %}.</div>
+{% endfor %}
+{% endblock %}

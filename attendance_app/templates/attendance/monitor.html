@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Monitoring{% endblock %}
+{% block content %}
+<h1>Attendance monitoring</h1>
+<form method="get" class="card filters">
+ <div><label>Date</label><input type="date" name="date" value="{{ date|date:'Y-m-d' }}"></div>
+ <div><label>Class</label><select name="class"><option value="">All classes</option>{% for c in classes %}<option value="{{ c.pk }}" {% if class_id == c.pk %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+ <div class="actions"><button class="btn primary" type="submit">Show</button>
+  <a class="btn" href="?date={{ prev|date:'Y-m-d' }}{% if class_id %}&class={{ class_id }}{% endif %}">← Prev day</a>
+  <a class="btn" href="?date={{ next|date:'Y-m-d' }}{% if class_id %}&class={{ class_id }}{% endif %}">Next day →</a></div>
+</form>
+<p><b>{{ date|date:"l, j F Y" }}</b> · <span class="badge">{{ done }} entered</span> <span class="badge {% if pending %}warn{% endif %}">{{ pending }} pending</span></p>
+{% for c, reason in holiday_notes %}<div class="card muted">{{ c.name }}: holiday ({{ reason }})</div>{% endfor %}
+{% for c, slots in groups %}
+<div class="card"><h2>{{ c.full_name }}</h2>
+ <div class="tablewrap"><table><tr><th>P</th><th>Time</th><th>Subject</th><th>Faculty</th><th>Status</th><th></th></tr>
+ {% for s in slots %}<tr><td>{{ s.period_no }}</td><td>{{ s.entry.start_time|time:"H:i" }}</td><td>{{ s.subject.name }}</td><td>{{ s.faculty.full_name }}</td>
+  <td>{% if s.completed %}<span class="badge">Entered</span>{% else %}<span class="badge warn">Pending</span>{% endif %}</td>
+  <td>{% if s.completed %}<a href="{% url 'session_detail' s.session.pk %}">View</a>{% elif not is_future %}<a href="{% url 'mark_attendance' c.pk s.date s.period_no %}">Enter</a>{% endif %}</td></tr>
+ {% empty %}<tr><td colspan="6" class="muted">No timetable for this day.</td></tr>{% endfor %}</table></div>
+</div>
+{% endfor %}
+{% endblock %}
