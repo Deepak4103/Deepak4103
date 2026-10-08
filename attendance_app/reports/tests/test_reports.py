@@ -293,6 +293,26 @@ class ScreenAndExportTests(ReportTestCase):
         r = self.client.get(reverse("report_view", args=["faculty-log"]), {"export": "pdf"})
         self.assertEqual(r.status_code, 200)
 
+    def test_pdf_uses_a_unicode_font_for_accented_and_non_latin_names(self):
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reports.export import FONT_DIR
+        text = "Café Ñandú Müller Žižek Ελληνικά Привет"
+        face = TTFont("probe", str(FONT_DIR / "DejaVuSans.ttf")).face
+        self.assertTrue(all(ord(ch) in face.charToGlyph for ch in text if ch != " "))   # font covers them
+        self.held(week(2), topic=text, user=self.ravi)
+        r = self.client.get(reverse("report_view", args=["faculty-log"]), {"export": "pdf"})
+        self.assertEqual(r.status_code, 200)
+        self.assertIn(b"DejaVuSans", r.content)          # embedded, not Helvetica
+
+    def test_pdf_falls_back_to_helvetica_if_font_files_are_missing(self):
+        from unittest import mock
+        from reports import export
+        with mock.patch.object(export, "FONT_DIR", export.FONT_DIR / "nope"), \
+                mock.patch("reportlab.pdfbase.pdfmetrics.getRegisteredFontNames", return_value=[]):
+            self.assertEqual(export._register_fonts(), ("Helvetica", "Helvetica-Bold"))
+        r = self.client.get(reverse("report_view", args=["faculty-log"]), {"export": "pdf"})
+        self.assertTrue(r.content.startswith(b"%PDF"))
+
     def test_threshold_setting_page(self):
         from academics.models import shortage_threshold
         self.client.post(reverse("period_settings"), {"forenoon_last_period": 4, "shortage_threshold": 80})
