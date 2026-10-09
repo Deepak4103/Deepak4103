@@ -42,3 +42,7 @@ class ResetPasswordForm(forms.Form):
         pw = self.cleaned_data["new_password"]
         password_validation.validate_password(pw)
         return pw
+
+
+class FacultyUploadForm(forms.Form):
+    file = forms.FileField(label="Excel or CSV file", help_text="Columns: full_name, user_id, password (optional)")

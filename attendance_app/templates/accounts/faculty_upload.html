@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Upload faculty{% endblock %}
+{% block content %}
+<h1>Upload faculty accounts</h1>
+<div class="card">
+ <p>Upload an Excel (.xlsx) or CSV file with the columns <b>full_name</b>, <b>user_id</b> and (optional) <b>password</b>. You will see a preview before anything is saved.</p>
+ <ul>
+  <li>User IDs must be unique, with no spaces (letters, digits and @ . + - _ only).</li>
+  <li>Leave the password blank and the app creates a random one for that person.</li>
+  <li>Everyone uploaded must set a new password at their first login.</li>
+ </ul>
+ <div class="actions"><a class="btn small" href="{% url 'faculty_template' 'xlsx' %}">Download Excel template</a>
+ <a class="btn small" href="{% url 'faculty_template' 'csv' %}">Download CSV template</a></div>
+</div>
+<form method="post" enctype="multipart/form-data" class="card">{% csrf_token %}
+ {{ form.non_field_errors }}
+ <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>{{ form.file }}{{ form.file.errors }}
+ <div class="actions"><button class="btn primary" type="submit">Preview</button>
+ <a class="btn" href="{% url 'faculty_list' %}">Cancel</a></div>
+</form>
+{% endblock %}

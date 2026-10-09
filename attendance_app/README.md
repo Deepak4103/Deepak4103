@@ -13,7 +13,7 @@ downloads reports.
 ## 1. What it does
 
 **Admin**
-- Classes, students (manual entry or Excel/CSV upload), subjects, faculty accounts (reset password, deactivate), allotment of faculty to subjects.
+- Classes, students (manual entry or Excel/CSV upload), subjects, faculty accounts (add one by one or bulk upload from Excel/CSV, reset password, deactivate), allotment of faculty to subjects.
 - Timetable per class: upload an Excel/CSV, preview it, edit it in a weekly grid. Each timetable has an *effective-from* date, so changing it never disturbs past records.
 - Holidays, leave types and yearly leave days, forenoon/afternoon split, shortage threshold (default 75%).
 - Monitoring dashboard: for any date, which periods have attendance and which are pending, with the faculty name.
@@ -112,7 +112,7 @@ reports and exports.
 
 1. **Classes** → add each class (name, branch, year, semester, section).
 2. Open a class → **Add subject** for each subject (name + code). Use the *same code* for the same subject in different sections (this is how "same subject taught to another class" is recognised).
-3. **Faculty** → create accounts (name, user ID, password). Tell faculty their login; they can change the password themselves.
+3. **Faculty** → create accounts (name, user ID, password), one by one or with **Bulk upload**. Template columns: `full_name, user_id, password` (the password is optional: if blank, the app generates one). You get a preview first, and after confirming, a one-time page listing every login to hand out (with a CSV download). Uploaded faculty must choose a new password at their first login. Tell faculty their login; they can change the password themselves.
 4. Open a class → **Allot faculty** to each subject.
 5. Open a class → **Students**: add manually or **Bulk upload**. Template columns: `roll_no, name`. Roll numbers are unique across the whole college. You get a preview and a list of problem rows before anything is saved.
 6. Open a class → **Timetable** → download the blank template, fill it in, upload it, check the preview, save, then fine-tune in the weekly grid.

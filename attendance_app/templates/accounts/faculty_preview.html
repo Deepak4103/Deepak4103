@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Preview{% endblock %}
+{% block content %}
+<h1>Preview: faculty upload</h1>
+<div class="card">
+ <p><span class="badge">{{ valid|length }} will be created</span> {% if errors %}<span class="badge off">{{ errors|length }} will be skipped</span>{% endif %}</p>
+ {% if errors %}<h2>Rows with problems</h2><div class="tablewrap"><table><tr><th>Line</th><th>User ID</th><th>Name</th><th>Problem</th></tr>
+ {% for line, uid, name, msg in errors %}<tr><td>{{ line }}</td><td>{{ uid }}</td><td>{{ name }}</td><td>{{ msg }}</td></tr>{% endfor %}</table></div>{% endif %}
+ {% if valid %}<h2>Accounts to create</h2><div class="tablewrap"><table><tr><th>Name</th><th>User ID</th><th>Password</th></tr>
+ {% for v in valid %}<tr><td>{{ v.full_name }}</td><td>{{ v.user_id }}</td><td>{% if v.password %}<span class="muted">from the file</span>{% else %}<span class="muted">will be generated</span>{% endif %}</td></tr>{% endfor %}</table></div>{% endif %}
+ <form method="post" class="actions">{% csrf_token %}<input type="hidden" name="action" value="confirm">
+  {% if valid %}<button class="btn primary" type="submit">Create {{ valid|length }} account{{ valid|length|pluralize }}</button>{% endif %}
+  <a class="btn" href="{% url 'faculty_upload' %}">Upload a different file</a>
+ </form>
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Accounts created{% endblock %}
+{% block content %}
+<h1>{{ created|length }} account{{ created|length|pluralize }} created</h1>
+<div class="alert"><b>Save these logins now.</b> The passwords are shown only on this page and cannot be viewed again.
+ (If someone forgets theirs, use <i>Reset password</i> on the Faculty page.) Everyone must choose a new password at their first login.</div>
+<div class="card">
+ <div class="tablewrap"><table><tr><th>Name</th><th>User ID</th><th>Password</th></tr>
+ {% for name, uid, pw in created %}<tr><td>{{ name }}</td><td>{{ uid }}</td><td><code>{{ pw }}</code></td></tr>{% endfor %}</table></div>
+ <div class="actions">
+  <a class="btn primary" download="faculty_logins.csv" href="data:text/csv;charset=utf-8,{{ csv|urlencode }}">Download as CSV</a>
+  <a class="btn" href="{% url 'faculty_list' %}">Go to Faculty</a></div>
+</div>
+{% endblock %}
