@@ -1,13 +1,21 @@
+import csv
+import io
+
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from academics import importing
+
+from . import bulk
 from .decorators import admin_required
-from .forms import FacultyCreateForm, FacultyEditForm, ResetPasswordForm
+from .forms import FacultyUploadForm, FacultyCreateForm, FacultyEditForm, ResetPasswordForm
 from .models import User
 
 
@@ -82,3 +90,51 @@ def faculty_toggle_active(request, pk):
     user.save(update_fields=["is_active"])
     messages.success(request, f"{user.full_name} {'activated' if user.is_active else 'deactivated'}.")
     return redirect("faculty_list")
+
+
+SESSION_KEY = "faculty_upload"
+
+
+@admin_required
+def faculty_template(request, fmt):
+    if fmt == "xlsx":
+        resp = HttpResponse(importing.template_xlsx(bulk.HEADERS),
+                            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    else:
+        resp = HttpResponse(importing.template_csv(bulk.HEADERS), content_type="text/csv")
+    resp["Content-Disposition"] = f'attachment; filename="faculty_template.{fmt}"'
+    return resp
+
+
+@admin_required
+def faculty_upload(request):
+    """Upload a file of faculty, preview it, then confirm. Nothing is saved until the confirm step."""
+    if request.method == "POST" and request.POST.get("action") == "confirm":
+        valid = request.session.pop(SESSION_KEY, None)
+        if not valid:
+            messages.error(request, "Upload expired. Please upload the file again.")
+            return redirect("faculty_upload")
+        valid, _ = bulk.validate_rows([{"_line": i, **v} for i, v in enumerate(valid)])    # re-check at save time
+        with transaction.atomic():
+            created = bulk.create_accounts(valid)
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(bulk.HEADERS)
+        writer.writerows(created)
+        csv_text = buf.getvalue()
+        return render(request, "accounts/faculty_upload_done.html", {"created": created, "csv": csv_text})   # shown once only
+
+    form = FacultyUploadForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            headers, rows = importing.read_rows(form.cleaned_data["file"])
+        except importing.UploadError as exc:
+            form.add_error("file", str(exc))
+        else:
+            if not bulk.has_required_headers(headers):
+                form.add_error("file", "Header row must contain: full_name, user_id (and optionally password)")
+            else:
+                valid, errors = bulk.validate_rows(rows)
+                request.session[SESSION_KEY] = valid
+                return render(request, "accounts/faculty_preview.html", {"valid": valid, "errors": errors})
+    return render(request, "accounts/faculty_upload.html", {"form": form})
